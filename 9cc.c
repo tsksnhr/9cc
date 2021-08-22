@@ -23,11 +23,19 @@ struct Token {
 // Token that be focused on
 Token *token;
 
-// output error message to stderr
-void error(char *fmt, ...){
+// get input for error message
+char *user_input;
+
+// output error message and error position to stderr
+void error_at(char *loc, char *fmt, ...){
 	va_list ap;
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+
+	int pos = loc - user_input;		// user_input = input's the head address, loc = each token's the head address
+	fprintf(stderr, "%s\n", user_input);
+	fprintf(stderr, "%*s", pos, " ");
+	fprintf(stderr, "^ ");
+	fprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	exit(1);
 }
@@ -46,7 +54,7 @@ bool consume(char op){
 // if not, calls error-func
 void expect(char op){
 	if (token->kind != TK_RESERVED || token->str[0] != op){
-		error("Argument is different from '%c'", op);
+		error_at(token->str, "Argument is different from '%c'", op);
 	}
 	token = token->next;
 }
@@ -55,7 +63,7 @@ void expect(char op){
 // if not, calls error-func
 int expect_number(){
 	if (token->kind != TK_NUM){
-		error("Argument is not a number.\n");
+		error_at(token->str ,"Argument is not a number.\n");
 	}
 	int val = token->val;
 	token = token->next;
@@ -100,7 +108,7 @@ Token *tokenize(char *p){
 			continue;
 		}
 
-		error("Cannot tokenize.\n");
+		error_at(p, "Cannot tokenize.\n");
 	}
 
 	new_token(TK_EOF, cur, p);
@@ -116,6 +124,7 @@ int main(int argc, char **argv){
 	}
 
 	// after tokenize, token is 2nd factor of linked-list
+	user_input = argv[1];
 	token = tokenize(argv[1]);
 
 	printf(".intel_syntax noprefix\n");
