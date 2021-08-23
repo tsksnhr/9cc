@@ -5,9 +5,9 @@ assert(){
 	expected="$1"
 	input="$2"
 
-	/workspace/9cc/9cc "$input" > tmp.s
+	./9cc "$input" > tmp.s
 	cc -o tmp tmp.s
-	/workspace/9cc/tmp
+	./tmp
 	actual="$?"
 
 	if [ "$actual" = "$expected" ]; then
