@@ -52,6 +52,7 @@ Node *new_node_num(int val);
 Node *expr();
 Node *mul();
 Node *primary();
+Node *unary();
 void gen(Node *node);
 
 // Token that be focused on
@@ -164,6 +165,8 @@ Node *new_node_num(int val){
     return node;
 }
 
+// Production rules
+// primary = num | '(' expr ')'*
 Node *primary(){
     if (consume('(')){
         Node *node = expr();
@@ -174,8 +177,20 @@ Node *primary(){
     return new_node_num(expect_number());
 }
 
+// unary = ('+' | '-')? primay
+Node *unary(){
+	if (consume('+')){
+		return new_node(ND_ADD, new_node_num(0), primary());
+	}
+	if (consume('-')){
+		return new_node(ND_SUB, new_node_num(0), primary());
+	}
+	return primary();
+}
+
+// mul = unary ('*'unary | '-'unary)*
 Node *mul(){
-    Node *node = primary();
+    Node *node = unary();
 
     for(;;){
         if (consume('*')){
@@ -190,6 +205,7 @@ Node *mul(){
     }
 }
 
+// expr = mul ('+'mul | '-'mul)*
 Node *expr(){
     Node *node = mul();
 
