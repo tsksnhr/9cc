@@ -13,11 +13,15 @@ typedef enum {
 } TokenKind;
 
 typedef enum {
-    ND_ADD,
-    ND_SUB,
-    ND_MUL,
-    ND_DIV,
-    ND_NUM,
+   	ND_ADD,
+	ND_SUB,
+	ND_MUL,
+	ND_DIV,
+	ND_EQUAL,
+	ND_NOT_EQUAL,
+	ND_RELATIONAL,
+	ND_EQ_RELATIONAL,
+	ND_NUM,
 } NodeKind;
 
 typedef struct Token Token;
@@ -138,7 +142,7 @@ Token *tokenize(char *p){
 			p++;
 			continue;
 		}
-		if (!strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "=<", 2) || !strncmp(p, ">=", 2)){
+		if (!strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "<=", 2) || !strncmp(p, ">=", 2)){
 			cur = new_token(TK_RESERVED, cur, p, 2);
 			p = p + 2;
 			continue;
@@ -148,7 +152,7 @@ Token *tokenize(char *p){
 			continue;
 		}
 		if (isdigit(*p)){
-			cur = new_token(TK_NUM, cur, p, 0);
+			cur = new_token(TK_NUM, cur, p, 3);
 			cur->val = strtol(p, &p, 10);
 			continue;
 		}
@@ -176,15 +180,50 @@ Node *new_node_num(int val){
 }
 
 // Production rules
-
 // expr = eqality
-// equality = relational ("=="relational | "!="relational)*
-// relational = add ("<="add | "<"add)*
+Node *expr(){
+	return equality();
+}
 
+// equality = relational ("=="relational | "!="relational)*
+Node *equality(){
+	Node *node = relational();
+
+	if (consume("==")){
+		node = new_node(ND_EQUAL, add(), node);
+	}
+	else if (consume("!=")){
+		node = new_node(ND_NOT_EQUAL, add(), node);
+	}
+	else{
+		return node;
+	}
+}
+
+// relational = add ("<="add | "<"add)*
+Node *relational(){
+	Node *node = add();
+
+	for (;;){
+		if (consume("<=")){
+			node = new_node(ND_EQ_RELATIONAL, node, add());
+		}
+		else if (consume(">=")){
+			node = new_node(ND_EQ_RELATIONAL, add(), node);		// arguments are reversed to use same code-generator
+		}
+		else if (consume("<")){
+			node = new_node(ND_RELATIONAL, node, add());
+		}
+		else if (consume(">")){
+			node = new_node(ND_RELATIONAL, add(), node);		// arguments are reversed to use same code-generator
+		}
+		else{
+			return node;
+		}
+	}
+}
 
 // add = mul ("+"mul | "-"mul)*
-
-// Todo: change function-name
 Node *add(){
     Node *node = mul();
 
@@ -232,7 +271,7 @@ Node *unary(){
 // primary = num | '(' expr ')'*
 Node *primary(){
     if (consume("(")){
-        Node *node = add();
+        Node *node = expr();
         expect(")");
         return node;
     }
@@ -241,34 +280,53 @@ Node *primary(){
 }
 
 void gen(Node *node){
-    if (node->kind == ND_NUM){
-        printf("	push %d\n", node->val);
-        return;
-    }
+	if (node->kind == ND_NUM){
+		printf("	push %d\n", node->val);
+		return;
+	}
 
-    gen(node->lhs);
-    gen(node->rhs);
+	gen(node->lhs);
+	gen(node->rhs);
 
-    printf("	pop rdi\n");
-    printf("	pop rax\n");
+	printf("	pop rdi\n");
+	printf("	pop rax\n");
 
-    switch (node->kind){
-        case ND_ADD:
-            printf("	add rax, rdi\n");
-            break;
-        case ND_SUB:
-            printf("	sub rax, rdi\n");
-            break;
-        case ND_MUL:
-            printf("	imul rax, rdi\n");
-            break;
-        case ND_DIV:
-            printf("	cqo\n");
-            printf("	idiv rdi\n");
-            break;
-    }
-
-    printf("	push rax\n");
+	switch (node->kind){
+		case ND_ADD:
+			printf("	add rax, rdi\n");
+			break;
+		case ND_SUB:
+			printf("	sub rax, rdi\n");
+			break;
+		case ND_MUL:
+			printf("	imul rax, rdi\n");
+			break;
+		case ND_DIV:
+			printf("	cqo\n");
+			printf("	idiv rdi\n");
+			break;
+		case ND_EQUAL:
+			printf("	cmp rax, rdi\n");
+			printf("	sete al\n");
+			printf("	movzb rax, al\n");
+			break;
+		case ND_NOT_EQUAL:
+			printf("	cmp rax, rdi\n");
+			printf("	setne al\n");
+			printf("	movzb rax, al\n");
+			break;
+		case ND_RELATIONAL:
+			printf("	cmp rax, rdi\n");
+			printf("	setl al\n");
+			printf("	movzb rax, al\n");
+			break;
+		case ND_EQ_RELATIONAL:
+			printf("	cmp rax, rdi\n");
+			printf("	setle al\n");
+			printf("	movzb rax, al\n");
+			break;
+	}
+	printf("	push rax\n");
 }
 
 int main(int argc, char **argv){
@@ -286,7 +344,7 @@ int main(int argc, char **argv){
 	printf(".global main\n");
 	printf("main:\n");
 
-	Node *node = add();
+	Node *node = expr();
 	gen(node);
 
 	printf("	pop rax\n");
