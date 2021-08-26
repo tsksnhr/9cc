@@ -11,14 +11,10 @@ int main(int argc, char **argv){
 	user_input = argv[1];
 	token = tokenize(argv[1]);
 
-	printf(".intel_syntax noprefix\n");
-	printf(".global main\n");
-	printf("main:\n");
-
+	// make data-tree, following by production rules
 	Node *node = expr();
-	gen(node);
 
-	printf("	pop rax\n");
-	printf("	ret\n");
+	code_generator(node);
+
 	return 0;
 }

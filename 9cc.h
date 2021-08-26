@@ -69,6 +69,7 @@ Node *primary();
 
 // code generator
 void gen(Node *node);
+void code_generator(Node *node);
 
 
 // Global variable
