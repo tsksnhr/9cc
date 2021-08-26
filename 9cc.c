@@ -189,14 +189,16 @@ Node *expr(){
 Node *equality(){
 	Node *node = relational();
 
-	if (consume("==")){
-		node = new_node(ND_EQUAL, add(), node);
-	}
-	else if (consume("!=")){
-		node = new_node(ND_NOT_EQUAL, add(), node);
-	}
-	else{
-		return node;
+	for (;;){
+		if (consume("==")){
+			node = new_node(ND_EQUAL, add(), node);
+		}
+		else if (consume("!=")){
+			node = new_node(ND_NOT_EQUAL, add(), node);
+		}
+		else{
+			return node;
+		}
 	}
 }
 
@@ -327,6 +329,7 @@ void gen(Node *node){
 			break;
 	}
 	printf("	push rax\n");
+	return;
 }
 
 int main(int argc, char **argv){
