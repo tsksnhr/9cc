@@ -6,6 +6,9 @@ Token *token;
 // input data for error message
 char *user_input;
 
+// stoage for multiple Node (separated by ";")
+Node *code[100];
+
 // output error message and error position to stderr
 void error_at(char *loc, char *fmt, ...){
 	va_list ap;
@@ -30,6 +33,20 @@ bool consume(char *op){
 	}
 	token = token->next;
 	return true;
+}
+
+Token *consume_ident(){
+	Token *tok;
+
+	if (token->kind != TK_IDENT
+//		|| token->len != strlen(op)
+//		|| memcmp(token->str, op, token->len)
+	){
+		return NULL;
+	}
+	tok = token;
+	token = token->next;
+	return tok;
 }
 
 // if Token'd kind is expected operand, this increments Token-position
@@ -82,12 +99,17 @@ Token *tokenize(char *p){
 			p++;
 			continue;
 		}
+		if (*p >= 'a' && *p <= 'z'){
+			cur = new_token(TK_IDENT, cur, p++, 1);
+			continue;
+		}
 		if (!strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "<=", 2) || !strncmp(p, ">=", 2)){
 			cur = new_token(TK_RESERVED, cur, p, 2);
 			p = p + 2;
 			continue;
 		}
-		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1) || !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "<", 1) || !strncmp(p, ">", 1)){
+		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1) || !strncmp(p, "(", 1)
+			|| !strncmp(p, ")", 1) || !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1) || !strncmp(p, ";", 1)){
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
@@ -120,9 +142,36 @@ Node *new_node_num(int val){
 }
 
 // Production rules
-// expr = eqality
+// program = stmt*
+Node *program(){
+	int i = 0;
+	while (!at_eof()){
+		code[i++] = stmt();
+	}
+	code[i] = NULL;
+}
+
+// stmt = expr ";"
+Node *stmt(){
+	Node *node = expr();
+
+	expect(";");
+	return node;
+}
+
+// expr = assign
 Node *expr(){
-	return equality();
+	return assign();
+}
+
+// assign = equality ("=" assign)?
+Node *assign(){
+	Node *node = equality();
+
+	if (consume("=")){
+		node = new_node(ND_ASSIGN, node, assign());
+	}
+	return node;
 }
 
 // equality = relational ("=="relational | "!="relational)*
@@ -210,13 +259,22 @@ Node *unary(){
 	return primary();
 }
 
-// primary = num | '(' expr ')'*
+// primary = num | ident | '(' expr ')'*
 Node *primary(){
-    if (consume("(")){
-        Node *node = expr();
-        expect(")");
-        return node;
-    }
+	if (consume("(")){
+		Node *node = expr();
+		expect(")");
+		return node;
+	}
 
-    return new_node_num(expect_number());
+	Token *tok = consume_ident();
+	if (tok){
+		Node *node = calloc(1, sizeof(Node));
+		node->kind = ND_LVAR;
+		node->offset = (tok->str[0] - 'a' + 1) * 8;
+		return node;
+	}
+
+
+	return new_node_num(expect_number());
 }

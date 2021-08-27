@@ -11,10 +11,22 @@ int main(int argc, char **argv){
 	user_input = argv[1];
 	token = tokenize(argv[1]);
 
-	// make data-tree, following by production rules
-	Node *node = expr();
+	// make data-tree (each tree saved in code[100])
+	program();
 
-	code_generator(node);
+	// former part of assenmly
+	com_gen();
+	// get 26 variable's meory
+	prologue();
+
+	for (int i = 0; code[i]; i++){
+		gen(code[i]);
+
+		// pop last value of each foluma
+		printf("	pop rax\n");
+	}
+
+	epilogue();
 
 	return 0;
 }
