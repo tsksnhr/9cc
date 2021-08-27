@@ -49,7 +49,7 @@ Token *consume_ident(){
 	return tok;
 }
 
-// if Token'd kind is expected operand, this increments Token-position
+// if Token's kind is expected operand, this increments Token-position
 // if not, calls error-func
 void expect(char *op){
 	if (token->kind != TK_RESERVED
