@@ -24,4 +24,8 @@ assert 255 "z = 255;"
 assert 5 "a = 3; b = 2; a + b;"
 assert 6 "a = 3; b = 3; c = 2; d = 5; e = 3; ((a + b) * (d - c))/e;"
 
+assert 11 "foo = 3; bar = 2; foo + bar * 4;"
+assert 1 "hoge = 2; piyo = 5; hoge * 5 == piyo * 2;"
+assert 1 "hoge = 3; piyo = 2; (hoge-2)*3 == (piyo != 0) + piyo;"
+
 echo OK

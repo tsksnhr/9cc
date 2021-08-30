@@ -11,6 +11,10 @@ int main(int argc, char **argv){
 	user_input = argv[1];
 	token = tokenize(argv[1]);
 
+	// get memory for head of local variables
+	// If this does not exist, the pointer of locals is NULL.
+	locals = calloc(1, sizeof(Lvar));
+
 	// make data-tree (each tree saved in code[100])
 	program();
 

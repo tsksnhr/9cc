@@ -1,13 +1,10 @@
 #include "9cc.h"
 
-// Token that focused on now
-Token *token;
-
-// input data for error message
-char *user_input;
-
-// stoage for multiple Node (separated by ";")
-Node *code[100];
+// definition of global varuable
+Token *token;		// Token that focused on now
+char *user_input;	// input data for error message
+Node *code[100];	// stoage for multiple Node (separated by ";")
+Lvar *locals;		// head of local varuable
 
 // output error message and error position to stderr
 void error_at(char *loc, char *fmt, ...){
@@ -38,10 +35,7 @@ bool consume(char *op){
 Token *consume_ident(){
 	Token *tok;
 
-	if (token->kind != TK_IDENT
-//		|| token->len != strlen(op)
-//		|| memcmp(token->str, op, token->len)
-	){
+	if (token->kind != TK_IDENT){
 		return NULL;
 	}
 	tok = token;
@@ -87,6 +81,16 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len){
 	return tok;
 }
 
+// search local variables
+Lvar *find_Lvar(Token *tok){
+	for (Lvar *lv = locals; lv; lv = lv->next){
+		if (lv->len == tok->len && !memcmp(lv->name, tok->str, lv->len)){
+			return lv;
+		}
+	}
+	return NULL;
+}
+
 // make linked-list of Token
 // return 2nd-Token (next Token of head)
 Token *tokenize(char *p){
@@ -100,7 +104,15 @@ Token *tokenize(char *p){
 			continue;
 		}
 		if (*p >= 'a' && *p <= 'z'){
-			cur = new_token(TK_IDENT, cur, p++, 1);
+			int len = 1;
+			char *p_get;
+			p_get = p;
+			p++;
+			while (*p >= 'a' && *p <= 'z'){
+				len++;
+				p++;
+			}
+			cur = new_token(TK_IDENT, cur, p_get, len);
 			continue;
 		}
 		if (!strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "<=", 2) || !strncmp(p, ">=", 2)){
@@ -210,7 +222,7 @@ Node *relational(){
 		}
 		else{
 			return node;
-		}
+fprintf(stderr, "called_2.\n");		}
 	}
 }
 
@@ -271,10 +283,22 @@ Node *primary(){
 	if (tok){
 		Node *node = calloc(1, sizeof(Node));
 		node->kind = ND_LVAR;
-		node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+		Lvar *lv = find_Lvar(tok);
+		if (lv){
+			node->offset = lv->offset;		// same offset memory from locals are reused
+		}
+		else{
+			lv = calloc(1, sizeof(Lvar));
+			lv->name = tok->str;
+			lv->len = tok->len;
+			lv->next = locals;
+			lv->offset = locals->offset + 8;
+			node->offset = lv->offset;
+			locals = lv;
+		}
 		return node;
 	}
-
 
 	return new_node_num(expect_number());
 }

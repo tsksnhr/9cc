@@ -49,6 +49,13 @@ struct Node {
 	int offset;	// used if kind == ND_LVAR
 };
 
+typedef struct Lvar Lvar;
+struct Lvar {
+	Lvar *next;
+	char *name;
+	int len;
+	int offset;
+};
 
 // prototype declaraiton
 // parse
@@ -62,6 +69,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rsh);
 Node *new_node_num(int val);
+Lvar *find_Lvar(Token *tok);
 
 // producttion rules
 Node *program();
@@ -86,3 +94,4 @@ void epilogue();
 extern Token *token;
 extern char *user_input;
 extern Node *code[];
+extern Lvar *locals;
