@@ -23,7 +23,7 @@ void error_at(char *loc, char *fmt, ...){
 // if Token's kind is expected operand, this returns true and increments Token-position
 // if not, this returns false
 bool consume(char *op){
-	if (token->kind != TK_RESERVED
+	if ((token->kind != TK_RESERVED && token->kind != TK_RETURN)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -32,6 +32,8 @@ bool consume(char *op){
 	return true;
 }
 
+// if Token is identifier, this returns token and increments Token-position
+// if not, this returns NULL
 Token *consume_ident(){
 	Token *tok;
 
@@ -63,6 +65,13 @@ int expect_number(){
 	int val = token->val;
 	token = token->next;
 	return val;
+}
+
+// check character whether it's element of token or not
+bool is_token_element(char c){
+	bool is_token_elem;
+	is_token_elem = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || (c == '_');
+	return is_token_elem;
 }
 
 bool at_eof(){
@@ -101,6 +110,11 @@ Token *tokenize(char *p){
 	while (*p){
 		if (isspace(*p)){
 			p++;
+			continue;
+		}
+		if (strncmp(p, "return", 6) == 0 && !is_token_element(p[6])){
+			cur = new_token(TK_RETURN, cur, p, 6);
+			p += 6;
 			continue;
 		}
 		if (*p >= 'a' && *p <= 'z'){
@@ -158,14 +172,23 @@ Node *new_node_num(int val){
 Node *program(){
 	int i = 0;
 	while (!at_eof()){
-		code[i++] = stmt();
+		code[i++] = stmt();	// post-fix operator
 	}
 	code[i] = NULL;
 }
 
-// stmt = expr ";"
+// stmt = expr ";" | "return" expr ";"
 Node *stmt(){
-	Node *node = expr();
+	Node *node;
+
+	if (consume("return")){
+		node = calloc(1, sizeof(Node));
+		node->kind = ND_RETURN;
+		node->lhs = expr();
+	}
+	else{
+		node = expr();
+	}
 
 	expect(";");
 	return node;

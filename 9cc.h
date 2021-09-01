@@ -13,6 +13,7 @@ typedef enum {
 	TK_IDENT,	// identifier
 	TK_NUM,		// number
 	TK_EOF,		// End Of File
+	TK_RETURN,	// return
 } TokenKind;
 
 typedef enum {
@@ -27,6 +28,7 @@ typedef enum {
 	ND_NUM,			// number
 	ND_ASSIGN,		// =
 	ND_LVAR,		// local variable
+	ND_RETURN,		// return
 } NodeKind;
 
 
@@ -70,6 +72,7 @@ Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rsh);
 Node *new_node_num(int val);
 Lvar *find_Lvar(Token *tok);
+bool is_token_element(char c);
 
 // producttion rules
 Node *program();

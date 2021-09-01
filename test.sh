@@ -28,4 +28,8 @@ assert 11 "foo = 3; bar = 2; foo + bar * 4;"
 assert 1 "hoge = 2; piyo = 5; hoge * 5 == piyo * 2;"
 assert 1 "hoge = 3; piyo = 2; (hoge-2)*3 == (piyo != 0) + piyo;"
 
+assert 5 "return a = 5;"
+assert 10 "hoge = 2; piyo = 5; return hoge*piyo;"
+assert 2 "hoge = 4; piyo = 2; foo = hoge/piyo; return foo;"
+
 echo OK
