@@ -245,7 +245,7 @@ Node *relational(){
 		}
 		else{
 			return node;
-fprintf(stderr, "called_2.\n");		}
+		}
 	}
 }
 
