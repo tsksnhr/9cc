@@ -23,7 +23,7 @@ void error_at(char *loc, char *fmt, ...){
 // if Token's kind is expected operand, this returns true and increments Token-position
 // if not, this returns false
 bool consume(char *op){
-	if ((token->kind != TK_RESERVED && token->kind != TK_RETURN)
+	if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -51,7 +51,7 @@ void expect(char *op){
 	if (token->kind != TK_RESERVED
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
-		error_at(token->str, "Argument is different from '%c'", op);
+		error_at(token->str, "Argument is different from '%s'", op);
 	}
 	token = token->next;
 }
@@ -112,6 +112,11 @@ Token *tokenize(char *p){
 			p++;
 			continue;
 		}
+		if (strncmp(p, "if", 2) == 0 && !is_token_element(p[2])){
+			cur = new_token(TK_IF, cur, p, 2);
+			p += 2;
+			continue;
+		}
 		if (strncmp(p, "return", 6) == 0 && !is_token_element(p[6])){
 			cur = new_token(TK_RETURN, cur, p, 6);
 			p += 6;
@@ -144,7 +149,6 @@ Token *tokenize(char *p){
 			cur->val = strtol(p, &p, 10);
 			continue;
 		}
-
 		error_at(p, "This was cannot be tokenized.\n");
 	}
 
@@ -177,20 +181,31 @@ Node *program(){
 	code[i] = NULL;
 }
 
-// stmt = expr ";" | "return" expr ";"
+// stmt = expr ";"
+//	| "return" expr ";"
+//	| "if" "(" expr ")" stmt ("else" stmt)?
+//	| "while" "(" expr ")" stmt
+//	| "for" "(" expr? ";" expr? ";" expr? ")" stmt
 Node *stmt(){
 	Node *node;
 
 	if (consume("return")){
+		node = new_node(ND_RETURN, expr(), NULL);
+		expect(";");
+	}
+	else if (consume("if")){
+		expect("(");
 		node = calloc(1, sizeof(Node));
-		node->kind = ND_RETURN;
+		node->kind = ND_IF;
 		node->lhs = expr();
+		expect(")");
+		node->rhs = stmt();
 	}
 	else{
 		node = expr();
+		expect(";");
 	}
 
-	expect(";");
 	return node;
 }
 

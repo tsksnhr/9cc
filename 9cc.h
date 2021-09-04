@@ -14,6 +14,10 @@ typedef enum {
 	TK_NUM,		// number
 	TK_EOF,		// End Of File
 	TK_RETURN,	// return
+	TK_IF,		// if
+	TK_ELSE,	// else
+	TK_WHILE,	// while
+	TK_FOR,		// for
 } TokenKind;
 
 typedef enum {
@@ -29,6 +33,10 @@ typedef enum {
 	ND_ASSIGN,		// =
 	ND_LVAR,		// local variable
 	ND_RETURN,		// return
+	ND_IF,			// if
+	ND_IFELSE,		// if ... else
+	ND_WHILE,		// while
+	ND_FOR,			// for
 } NodeKind;
 
 
@@ -70,6 +78,7 @@ bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rsh);
+Node *new_node_lhs(NodeKind kind, Node *lhs);
 Node *new_node_num(int val);
 Lvar *find_Lvar(Token *tok);
 bool is_token_element(char c);
