@@ -35,4 +35,7 @@ assert 2 "hoge = 4; piyo = 2; foo = hoge/piyo; return foo;"
 assert 3 "hoge = 1; piyo = 2; if ((hoge + piyo)*10 == 30) return 3; else return 4;"
 assert 4 "hoge = 1; piyo = 2; if ((hoge + piyo)*10 != 30) return 3; else return 4;"
 
+assert 10 "test = 1; while (test < 10) test = test + 1; return test;"
+assert 50 "test = 1; while (test*2 < 100) test = test+ 1; return test;"
+
 echo OK

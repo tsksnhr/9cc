@@ -24,7 +24,11 @@ void error_at(char *loc, char *fmt, ...){
 // if Token's kind is expected operand, this returns true and increments Token-position
 // if not, this returns false
 bool consume(char *op){
-	if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF && token->kind != TK_ELSE)
+	if ((token->kind != TK_RESERVED
+		&& token->kind != TK_RETURN
+		&& token->kind != TK_IF
+		&& token->kind != TK_ELSE
+		&& token->kind != TK_WHILE)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -124,6 +128,11 @@ Token *tokenize(char *p){
 			p += 4;
 			continue;
 		}
+		if (strncmp(p, "while", 5) == 0 && !is_token_element(p[5])){
+			cur = new_token(TK_WHILE, cur, p, 5);
+			p += 5;
+			continue;
+		}
 		if (strncmp(p, "return", 6) == 0 && !is_token_element(p[6])){
 			cur = new_token(TK_RETURN, cur, p, 6);
 			p += 6;
@@ -218,6 +227,14 @@ Node *stmt(){
 	else if (consume("else")){
 		node = calloc(1,sizeof(Node));
 		node->kind = ND_ELSE;
+		node->rhs = stmt();
+	}
+	else if (consume("while")){
+		expect("(");
+		node = calloc(1, sizeof(Node));
+		node->kind = ND_WHILE;
+		node->lhs = expr();
+		expect(")");
 		node->rhs = stmt();
 	}
 	else{
