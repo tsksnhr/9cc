@@ -78,7 +78,6 @@ bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rsh);
-Node *new_node_lhs(NodeKind kind, Node *lhs);
 Node *new_node_num(int val);
 Lvar *find_Lvar(Token *tok);
 bool is_token_element(char c);
