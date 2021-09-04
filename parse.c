@@ -5,6 +5,7 @@ Token *token;		// Token that focused on now
 char *user_input;	// input data for error message
 Node *code[100];	// stoage for multiple Node (separated by ";")
 Lvar *locals;		// head of local varuable
+int code_rows;		// number of lines
 
 // output error message and error position to stderr
 void error_at(char *loc, char *fmt, ...){
@@ -23,7 +24,7 @@ void error_at(char *loc, char *fmt, ...){
 // if Token's kind is expected operand, this returns true and increments Token-position
 // if not, this returns false
 bool consume(char *op){
-	if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF)
+	if ((token->kind != TK_RESERVED && token->kind != TK_RETURN && token->kind != TK_IF && token->kind != TK_ELSE)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -87,6 +88,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len){
 	tok->len = len;
 
 	cur->next = tok;
+	tok->before = cur;
 	return tok;
 }
 
@@ -115,6 +117,11 @@ Token *tokenize(char *p){
 		if (strncmp(p, "if", 2) == 0 && !is_token_element(p[2])){
 			cur = new_token(TK_IF, cur, p, 2);
 			p += 2;
+			continue;
+		}
+		if (strncmp(p, "else", 4) == 0 && !is_token_element(p[4])){
+			cur = new_token(TK_ELSE, cur, p, 4);
+			p += 4;
 			continue;
 		}
 		if (strncmp(p, "return", 6) == 0 && !is_token_element(p[6])){
@@ -174,11 +181,11 @@ Node *new_node_num(int val){
 // Production rules
 // program = stmt*
 Node *program(){
-	int i = 0;
+	int code_rows = 0;
 	while (!at_eof()){
-		code[i++] = stmt();	// post-fix operator
+		code[code_rows++] = stmt();	// post-fix operator
 	}
-	code[i] = NULL;
+	code[code_rows] = NULL;
 }
 
 // stmt = expr ";"
@@ -196,9 +203,21 @@ Node *stmt(){
 	else if (consume("if")){
 		expect("(");
 		node = calloc(1, sizeof(Node));
-		node->kind = ND_IF;
 		node->lhs = expr();
 		expect(")");
+		node->rhs = stmt();
+
+		if (consume("else")){
+			node->kind = ND_IFELSE;
+			token = token->before;		// after checking token, token-position is backed
+		}
+		else{
+			node->kind = ND_IF;
+		}
+	}
+	else if (consume("else")){
+		node = calloc(1,sizeof(Node));
+		node->kind = ND_ELSE;
 		node->rhs = stmt();
 	}
 	else{

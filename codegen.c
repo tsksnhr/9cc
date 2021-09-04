@@ -29,6 +29,20 @@ void gen(Node *node){
 			printf("	je .Lend000\n");
 			gen(node->rhs);
 			printf(".Lend000:\n");
+			return;
+		case ND_IFELSE:
+			gen(node->lhs);
+			printf("	pop rax\n");
+			printf("	cmp rax, 0\n");
+			printf("je .Lelse001\n");
+			gen(node->rhs);
+			printf("jmp .Lend002\n");
+			return;
+		case ND_ELSE:
+			printf(".Lelse001:\n");
+			gen(node->rhs);
+			printf(".Lend002:\n");
+			return;
 		case ND_NUM:
 			printf("	push %d\n", node->val);
 			return ;

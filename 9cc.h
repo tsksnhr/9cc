@@ -35,6 +35,7 @@ typedef enum {
 	ND_RETURN,		// return
 	ND_IF,			// if
 	ND_IFELSE,		// if ... else
+	ND_ELSE,		// else
 	ND_WHILE,		// while
 	ND_FOR,			// for
 } NodeKind;
@@ -44,6 +45,7 @@ typedef enum {
 typedef struct Token Token;
 struct Token {
 	TokenKind kind;
+	Token *before;
 	Token *next;
 	int val;	// number (if kind == TK_NUM)
 	char *str;	// Token string
