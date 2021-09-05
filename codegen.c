@@ -14,7 +14,18 @@ void gen_lval(Node *node){
 }
 
 void gen(Node *node){
+	int stmt_num = 0;
 	switch (node->kind){
+		case ND_BLOCK:
+			while (node->blk_stmt[stmt_num] != NULL){
+				if (stmt_num != 0){
+					printf("	pop rax\n");
+				}
+				gen(node->blk_stmt[stmt_num]);
+				stmt_num++;
+			}
+			return;
+
 		case ND_RETURN:
 			gen(node->lhs);
 			printf("	pop rax\n");

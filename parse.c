@@ -158,11 +158,12 @@ Token *tokenize(char *p){
 		}
 		if (!strncmp(p, "==", 2) || !strncmp(p, "!=", 2) || !strncmp(p, "<=", 2) || !strncmp(p, ">=", 2)){
 			cur = new_token(TK_RESERVED, cur, p, 2);
-			p = p + 2;
+			p += 2;
 			continue;
 		}
-		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1) || !strncmp(p, "(", 1)
-			|| !strncmp(p, ")", 1) || !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1) || !strncmp(p, ";", 1)){
+		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1)
+			|| !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "{", 1) || !strncmp(p, "}", 1) || !strncmp(p, ";", 1)
+			|| !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1)){
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
@@ -204,6 +205,7 @@ Node *program(){
 }
 
 // stmt = expr ";"
+//	| "{" stmt* "}"
 //	| "return" expr ";"
 //	| "if" "(" expr ")" stmt ("else" stmt)?
 //	| "while" "(" expr ")" stmt
@@ -211,7 +213,17 @@ Node *program(){
 Node *stmt(){
 	Node *node;
 
-	if (consume("return")){
+	if (consume("{")){
+		node = calloc(1, sizeof(Node));
+		node->kind = ND_BLOCK;
+
+		int stmt_num = 0;
+		while (!consume("}")){
+			node->blk_stmt[stmt_num++] = stmt();
+		}
+		node->blk_stmt[stmt_num] = NULL;
+	}
+	else if (consume("return")){
 		node = new_node(ND_RETURN, expr(), NULL);
 		expect(";");
 	}

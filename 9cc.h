@@ -38,6 +38,7 @@ typedef enum {
 	ND_ELSE,		// else
 	ND_WHILE,		// while
 	ND_FOR,			// for
+	ND_BLOCK,		// block
 } NodeKind;
 
 
@@ -59,6 +60,7 @@ struct Node {
 	Node *rhs;
 	Node *for_init;		// used if kind == ND_FOR
 	Node *for_update;	// used if kind == ND_FOR
+	Node *blk_stmt[100];	// used if kind == ND_BLOCK
 	int val;		// used if kind == ND_NUM
 	int offset;		// used if kind == ND_LVAR
 };

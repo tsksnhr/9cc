@@ -42,4 +42,10 @@ assert 110 "foo = 0; for (i = 0; i <= 10; i = i + 1) foo = foo + 10; foo;"
 assert 16 "hoge = 0; piyo = 5; for( ; hoge <= 10; ) hoge = hoge + 1; return hoge + piyo;"
 assert 20 "hoge = 5; piyo = 5; for(foo = 0; foo < 10; ) foo = foo + 1; return hoge + piyo + foo;"
 
+assert 3 "{a = 1; b = 2; return a + b;}"
+assert 30 "hoge = 0; piyo = 0; for (i = 0; i < 10; i = i + 1){hoge = hoge + 1; piyo = piyo + 2;} return hoge + piyo;"
+assert 30 "hoge = 0; piyo = 0; while(hoge < 10){hoge = hoge + 1; piyo = piyo + 2;} return hoge + piyo;"
+assert 3 "hoge = 0; piyo = 0; if (hoge == 0){hoge = hoge + 1; piyo = piyo + 2;} else{hoge = 10; piyo = 10;} return hoge + piyo;"
+assert 20 "hoge = 0; piyo = 0; if (hoge != 0){hoge = hoge + 1; piyo = piyo + 2;} else{hoge = 10; piyo = 10;} return hoge + piyo;"
+
 echo OK
