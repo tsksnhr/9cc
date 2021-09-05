@@ -68,10 +68,10 @@ void gen(Node *node){
 			printf("	cmp rax, 0\n");
 			printf("	je .Lend204\n");
 
-                        gen(node->rhs);
-                        printf("        jmp .Lbegin203\n");
-                        printf(".Lend204:\n");
-                        return;
+			gen(node->rhs);
+			printf("        jmp .Lbegin203\n");
+			printf(".Lend204:\n");
+			return;
 
 		case ND_FOR:
 			if (node->for_init != NULL) gen(node->for_init);
