@@ -39,6 +39,7 @@ typedef enum {
 	ND_WHILE,		// while
 	ND_FOR,			// for
 	ND_BLOCK,		// block
+	ND_FUNC,
 } NodeKind;
 
 
@@ -58,11 +59,17 @@ struct Node {
 	NodeKind kind;
 	Node *lhs;
 	Node *rhs;
+
 	Node *for_init;		// used if kind == ND_FOR
 	Node *for_update;	// used if kind == ND_FOR
+
 	Node *blk_stmt[100];	// used if kind == ND_BLOCK
+
 	int val;		// used if kind == ND_NUM
 	int offset;		// used if kind == ND_LVAR
+
+	char *func_name;	// used if kind == ND_FUNC
+	int name_len;		// used if kind == ND_FUNC
 };
 
 typedef struct Lvar Lvar;
@@ -105,6 +112,9 @@ void gen(Node *node);
 void com_gen();
 void prologue();
 void epilogue();
+
+// Test func
+int foo();
 
 
 // Global variable

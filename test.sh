@@ -19,6 +19,15 @@ assert(){
 	fi
 }
 
+call(){
+	input="$1"
+
+	./9cc "$input" > tmp.s
+
+	cc -o tmp tmp.s testf.o
+	./tmp
+}
+
 assert 5 " 3 + 2;"
 assert 255 "z = 255;"
 assert 5 "a = 3; b = 2; c = a + b;"
@@ -47,5 +56,7 @@ assert 30 "hoge = 0; piyo = 0; for (i = 0; i < 10; i = i + 1){hoge = hoge + 1; p
 assert 30 "hoge = 0; piyo = 0; while(hoge < 10){hoge = hoge + 1; piyo = piyo + 2;} return hoge + piyo;"
 assert 3 "hoge = 0; piyo = 0; if (hoge == 0){hoge = hoge + 1; piyo = piyo + 2;} else{hoge = 10; piyo = 10;} return hoge + piyo;"
 assert 20 "hoge = 0; piyo = 0; if (hoge != 0){hoge = hoge + 1; piyo = piyo + 2;} else{hoge = 10; piyo = 10;} return hoge + piyo;"
+
+call "for (i = 0; i < 10; i = i + 1) foo();"
 
 echo OK

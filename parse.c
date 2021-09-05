@@ -389,7 +389,9 @@ Node *unary(){
 	return primary();
 }
 
-// primary = num | ident | '(' expr ')'*
+// primary = num
+//		| ident ("("  ")")?
+//		| '(' expr ')'*
 Node *primary(){
 	if (consume("(")){
 		Node *node = expr();
@@ -400,8 +402,16 @@ Node *primary(){
 	Token *tok = consume_ident();
 	if (tok){
 		Node *node = calloc(1, sizeof(Node));
-		node->kind = ND_LVAR;
 
+		if (consume("(")){
+			node->kind = ND_FUNC;
+			node->func_name = tok->str;
+			node->name_len = tok->len;
+			expect(")");
+			return node;
+		}
+
+		node->kind = ND_LVAR;
 		Lvar *lv = find_Lvar(tok);
 		if (lv){
 			node->offset = lv->offset;		// same offset memory from locals are reused

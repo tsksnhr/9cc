@@ -13,6 +13,7 @@ void gen_lval(Node *node){
 	return;
 }
 
+
 void gen(Node *node){
 	int stmt_num = 0;
 	switch (node->kind){
@@ -99,6 +100,13 @@ void gen(Node *node){
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");
 			return;
+
+		case ND_FUNC:
+			printf("	call ");
+			for (int i = 0; i < node->name_len; i++) printf("%c", (node->func_name)[i]);
+			printf("\n");
+			return;
+
 		case ND_ASSIGN:
 			gen_lval(node->lhs);	// address
 			gen(node->rhs);		// value
