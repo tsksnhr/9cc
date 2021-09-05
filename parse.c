@@ -25,10 +25,11 @@ void error_at(char *loc, char *fmt, ...){
 // if not, this returns false
 bool consume(char *op){
 	if ((token->kind != TK_RESERVED
-		&& token->kind != TK_RETURN
-		&& token->kind != TK_IF
-		&& token->kind != TK_ELSE
-		&& token->kind != TK_WHILE)
+			&& token->kind != TK_RETURN
+			&& token->kind != TK_IF
+			&& token->kind != TK_ELSE
+			&& token->kind != TK_WHILE
+			&& token->kind != TK_FOR)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -133,6 +134,11 @@ Token *tokenize(char *p){
 			p += 5;
 			continue;
 		}
+		if (strncmp(p, "for", 3) == 0 && !is_token_element(p[3])){
+			cur = new_token(TK_FOR, cur, p, 3);
+			p += 3;
+			continue;
+		}
 		if (strncmp(p, "return", 6) == 0 && !is_token_element(p[6])){
 			cur = new_token(TK_RETURN, cur, p, 6);
 			p += 6;
@@ -235,6 +241,32 @@ Node *stmt(){
 		node->kind = ND_WHILE;
 		node->lhs = expr();
 		expect(")");
+		node->rhs = stmt();
+	}
+	else if (consume("for")){
+		expect("(");
+		node = calloc(1, sizeof(Node));
+		node->kind = ND_FOR;
+		node->for_init = NULL;
+		node->lhs = NULL;
+		node->for_update = NULL;
+
+		int for_node_cnt = 0;
+		while (!consume(")")){
+			if (consume(";")){
+				for_node_cnt++;
+				 continue;
+			}
+			else{
+				if (for_node_cnt == 0) node->for_init = expr();
+				else if (for_node_cnt == 1) node->lhs = expr();
+				else if (for_node_cnt == 2) node->for_update = expr();
+				else{
+					fprintf(stderr, "Unexpected Token ... for_node_cnt = %d\n", for_node_cnt);
+					exit(1);
+				}
+			}
+		}
 		node->rhs = stmt();
 	}
 	else{

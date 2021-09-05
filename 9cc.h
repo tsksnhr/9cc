@@ -57,8 +57,10 @@ struct Node {
 	NodeKind kind;
 	Node *lhs;
 	Node *rhs;
-	int val;	// used if kind == ND_NUM
-	int offset;	// used if kind == ND_LVAR
+	Node *for_init;		// used if kind == ND_FOR
+	Node *for_update;	// used if kind == ND_FOR
+	int val;		// used if kind == ND_NUM
+	int offset;		// used if kind == ND_LVAR
 };
 
 typedef struct Lvar Lvar;

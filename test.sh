@@ -21,7 +21,7 @@ assert(){
 
 assert 5 " 3 + 2;"
 assert 255 "z = 255;"
-assert 5 "a = 3; b = 2; a + b;"
+assert 5 "a = 3; b = 2; c = a + b;"
 assert 6 "a = 3; b = 3; c = 2; d = 5; e = 3; ((a + b) * (d - c))/e;"
 
 assert 11 "foo = 3; bar = 2; foo + bar * 4;"
@@ -36,6 +36,10 @@ assert 3 "hoge = 1; piyo = 2; if ((hoge + piyo)*10 == 30) return 3; else return 
 assert 4 "hoge = 1; piyo = 2; if ((hoge + piyo)*10 != 30) return 3; else return 4;"
 
 assert 10 "test = 1; while (test < 10) test = test + 1; return test;"
-assert 50 "test = 1; while (test*2 < 100) test = test+ 1; return test;"
+assert 50 "test = 1; while (test*2 < 100) test = test+ 1;"
+
+assert 110 "foo = 0; for (i = 0; i <= 10; i = i + 1) foo = foo + 10; foo;"
+assert 16 "hoge = 0; piyo = 5; for( ; hoge <= 10; ) hoge = hoge + 1; return hoge + piyo;"
+assert 20 "hoge = 5; piyo = 5; for(foo = 0; foo < 10; ) foo = foo + 1; return hoge + piyo + foo;"
 
 echo OK
