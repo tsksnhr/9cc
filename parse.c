@@ -162,7 +162,7 @@ Token *tokenize(char *p){
 			continue;
 		}
 		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1)
-			|| !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "{", 1) || !strncmp(p, "}", 1) || !strncmp(p, ";", 1)
+			|| !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "{", 1) || !strncmp(p, "}", 1) || !strncmp(p, ";", 1) || !strncmp(p, ",", 1)
 			|| !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1)){
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
@@ -390,8 +390,8 @@ Node *unary(){
 }
 
 // primary = num
-//		| ident ("("  ")")?
-//		| '(' expr ')'*
+//	| ident ("(" ((num ",")* num)? ")")?
+//	| '(' expr ')'*
 Node *primary(){
 	if (consume("(")){
 		Node *node = expr();
@@ -407,7 +407,14 @@ Node *primary(){
 			node->kind = ND_FUNC;
 			node->func_name = tok->str;
 			node->name_len = tok->len;
-			expect(")");
+
+			int argv_cnt = 0;
+			while (!consume(")")){
+				if (argv_cnt != 0) expect(",");
+				node->argv_list[argv_cnt++] = expect_number();
+			}
+			node->total_argv_num = argv_cnt;
+//			expect(")");
 			return node;
 		}
 

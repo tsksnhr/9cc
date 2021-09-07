@@ -6,7 +6,7 @@ assert(){
 
 	./9cc "$input" > tmp.s
 
-	cc -o tmp tmp.s
+	cc -o tmp tmp.s testf.o
 	./tmp
 
 	actual="$?"
@@ -24,9 +24,13 @@ call(){
 
 	./9cc "$input" > tmp.s
 
+	echo "$input was called."
+
 	cc -o tmp tmp.s testf.o
 	./tmp
+
 }
+
 
 assert 5 " 3 + 2;"
 assert 255 "z = 255;"
@@ -58,5 +62,8 @@ assert 3 "hoge = 0; piyo = 0; if (hoge == 0){hoge = hoge + 1; piyo = piyo + 2;} 
 assert 20 "hoge = 0; piyo = 0; if (hoge != 0){hoge = hoge + 1; piyo = piyo + 2;} else{hoge = 10; piyo = 10;} return hoge + piyo;"
 
 call "for (i = 0; i < 10; i = i + 1) foo();"
+call "a = 1; b = 2; hoge(3, 4, 5);"
+#assert 12  "hoge(3, 4, 5);"
+call "piyo(1, 2, 3, 4, 5, 6);"
 
 echo OK

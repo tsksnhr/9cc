@@ -70,6 +70,8 @@ struct Node {
 
 	char *func_name;	// used if kind == ND_FUNC
 	int name_len;		// used if kind == ND_FUNC
+	int argv_list[6];	// used if kind == ND_FUNC
+	int total_argv_num;	// used if kind == ND_FUNC
 };
 
 typedef struct Lvar Lvar;
