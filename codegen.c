@@ -104,13 +104,15 @@ void gen(Node *node){
 		case ND_FUNC:
 			// evaluate arguments
 			for (int i = 0; i < node->total_argv_num; i++){
-				int tag_argv = node->argv_list[i];
-				if (i == 0) printf("	mov rdi, %d\n", tag_argv);
-				if (i == 1) printf("	mov rsi, %d\n", tag_argv);
-				if (i == 2) printf("	mov rdx, %d\n", tag_argv);
-				if (i == 3) printf("	mov rcx, %d\n", tag_argv);
-				if (i == 4) printf("	mov r8, %d\n", tag_argv);
-				if (i == 5) printf("	mov r9, %d\n", tag_argv);
+				gen(node->argv_list[i]);
+
+				printf("	pop rax\n");
+				if (i == 0) printf("	mov rdi, rax\n");
+				if (i == 1) printf("	mov rsi, rax\n");
+				if (i == 2) printf("	mov rdx, rax\n");
+				if (i == 3) printf("	mov rcx, rax\n");
+				if (i == 4) printf("	mov r8, rax\n");
+				if (i == 5) printf("	mov r9, rax\n");
 			}
 
 			// jump to the address of function

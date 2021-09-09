@@ -70,7 +70,7 @@ struct Node {
 
 	char *func_name;	// used if kind == ND_FUNC
 	int name_len;		// used if kind == ND_FUNC
-	int argv_list[6];	// used if kind == ND_FUNC
+	Node *argv_list[6];	// used if kind == ND_FUNC
 	int total_argv_num;	// used if kind == ND_FUNC
 };
 
@@ -108,6 +108,8 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+Node *argv(Token *ident);
+Node *lvar(Token *ident);
 
 // code generator
 void gen(Node *node);

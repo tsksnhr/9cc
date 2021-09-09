@@ -390,7 +390,7 @@ Node *unary(){
 }
 
 // primary = num
-//	| ident ("(" ((num ",")* num)? ")")?
+//	| ident ("(" argv* ")")?
 //	| '(' expr ')'*
 Node *primary(){
 	if (consume("(")){
@@ -399,41 +399,57 @@ Node *primary(){
 		return node;
 	}
 
-	Token *tok = consume_ident();
-	if (tok){
+	Token *ident = consume_ident();
+	if (ident){
 		Node *node = calloc(1, sizeof(Node));
 
 		if (consume("(")){
 			node->kind = ND_FUNC;
-			node->func_name = tok->str;
-			node->name_len = tok->len;
+			node->func_name = ident->str;
+			node->name_len = ident->len;
 
 			int argv_cnt = 0;
 			while (!consume(")")){
 				if (argv_cnt != 0) expect(",");
-				node->argv_list[argv_cnt++] = expect_number();
+
+				Token *argv_ident = consume_ident();
+				node->argv_list[argv_cnt++] = argv(argv_ident);
 			}
 			node->total_argv_num = argv_cnt;
-//			expect(")");
 			return node;
 		}
-
-		node->kind = ND_LVAR;
-		Lvar *lv = find_Lvar(tok);
-		if (lv){
-			node->offset = lv->offset;		// same offset memory from locals are reused
-		}
-		else{
-			lv = calloc(1, sizeof(Lvar));
-			lv->name = tok->str;
-			lv->len = tok->len;
-			lv->next = locals;
-			lv->offset = locals->offset + 8;
-			node->offset = lv->offset;
-			locals = lv;
-		}
-		return node;
+		return argv(ident);
 	}
 
-	return new_node_num(expect_number());
+	return argv(ident);
+}
+
+// argv = num | lvar
+Node *argv(Token *ident){
+	if (ident != NULL){
+		return lvar(ident);
+	}
+	else{
+		return new_node_num(expect_number());
+	}
+}
+
+Node *lvar(Token *ident){
+	Node *node = calloc(1, sizeof(Node));
+
+	node->kind = ND_LVAR;
+	Lvar *lv = find_Lvar(ident);
+	if (lv){
+		node->offset = lv->offset;		// same offset memory from locals are reused
+	}
+	else{
+		lv = calloc(1, sizeof(Lvar));
+		lv->name = ident->str;
+		lv->len = ident->len;
+		lv->next = locals;
+		lv->offset = locals->offset + 8;
+		node->offset = lv->offset;
+		locals = lv;
+	}
+	return node;
 }
