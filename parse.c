@@ -149,7 +149,7 @@ Token *tokenize(char *p){
 			char *p_get;
 			p_get = p;
 			p++;
-			while (*p >= 'a' && *p <= 'z'){
+			while ((*p >= 'a' && *p <= 'z') || *p == '_'){
 				len++;
 				p++;
 			}
