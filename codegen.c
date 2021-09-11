@@ -31,7 +31,6 @@ void gen(Node *node){
 			gen(node->lhs);
 			printf("	pop rax\n");
 			epilogue();
-
 			return;
 
 		case ND_IF:
@@ -39,6 +38,7 @@ void gen(Node *node){
 			printf("	pop rax\n");
 			printf("	cmp rax, 0\n");
 			printf("	je .Lend000\n");
+
 			gen(node->rhs);
 			printf(".Lend000:\n");
 			return;
@@ -150,29 +150,24 @@ void gen(Node *node){
 				printf("	pop rax\n");
 				if (i == 0){
 					printf("	mov [rax], rdi\n");
-					printf("	push rdi\n");
 				}
 				if (i == 1){
 					printf("	mov [rax], rsi\n");
-					printf("	push rsi\n");
 				}
 				if (i == 2){
 					printf("	mov [rax], rdx\n");
-					printf("	push rdx\n");
 				}
 				if (i == 3){
 					printf("	mov [rax], rcx\n");
-					printf("	push rci\n");
 				}
 				if (i == 4){
 					printf("	mov [rax], r8\n");
-					printf("	push r8\n");
 				}
 				if (i == 5){
 					printf("	mov [rax], r9\n");
-					printf("	push r9\n");
 				}
 			}
+			printf("	push rax\n");
 			return;
 
 		case ND_ASSIGN:
@@ -235,7 +230,6 @@ void gen(Node *node){
 void com_gen(){
 	printf(".intel_syntax noprefix\n");
 	printf(".globl main\n");
-//	printf("main:\n");
 	return;
 }
 
