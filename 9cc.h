@@ -39,7 +39,8 @@ typedef enum {
 	ND_WHILE,		// while
 	ND_FOR,			// for
 	ND_BLOCK,		// block
-	ND_FUNC,
+	ND_FUNC_CALL,		// function call
+	ND_FUNC_DECLEAR,	// function declearation
 } NodeKind;
 
 
@@ -99,6 +100,7 @@ bool is_token_element(char c);
 
 // producttion rules
 Node *program();
+Node *func();
 Node *stmt();
 Node *assign();
 Node *expr();

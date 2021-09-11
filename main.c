@@ -20,8 +20,6 @@ int main(int argc, char **argv){
 
 	// former part of assenmly
 	com_gen();
-	// get 26 variable's meory
-	prologue();
 
 	for (int i = 0; code[i]; i++){
 		gen(code[i]);
@@ -29,8 +27,6 @@ int main(int argc, char **argv){
 		// pop last value of each foluma
 		printf("	pop rax\n");
 	}
-
-	epilogue();
 
 	return 0;
 }

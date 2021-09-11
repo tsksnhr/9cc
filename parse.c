@@ -5,7 +5,7 @@ Token *token;		// Token that focused on now
 char *user_input;	// input data for error message
 Node *code[100];	// stoage for multiple Node (separated by ";")
 Lvar *locals;		// head of local varuable
-int code_rows;		// number of lines
+int code_row;		// number of lines
 
 // output error message and error position to stderr
 void error_at(char *loc, char *fmt, ...){
@@ -195,13 +195,47 @@ Node *new_node_num(int val){
 }
 
 // Production rules
-// program = stmt*
+// program = func "{" stmt* "}"
 Node *program(){
-	int code_rows = 0;
+	int code_row = 0;
+
 	while (!at_eof()){
-		code[code_rows++] = stmt();	// post-fix operator
+		code[code_row++] = func();
+		code[code_row++] = stmt();
 	}
-	code[code_rows] = NULL;
+	code[code_row] = NULL;
+}
+
+// func = ident "(" argv* ")"
+Node *func(){
+
+	Token *ident = consume_ident();
+
+	if (ident){
+		Node *node = calloc(1, sizeof(Node));
+
+		if (consume("(")){
+			node->kind = ND_FUNC_DECLEAR;
+			node->func_name = ident->str;
+			node->name_len = ident->len;
+
+			int argv_cnt = 0;
+			while (!consume(")")){
+				if (argv_cnt != 0) expect(",");
+
+				Token *argv_ident = consume_ident();
+				node->argv_list[argv_cnt++] = argv(argv_ident);
+			}
+			node->total_argv_num = argv_cnt;
+			return node;
+		}
+		else{
+			error_at(ident->str, "Function name is expected, but not.\n");
+		}
+	}
+	else{
+		error_at(ident->str, "\"(\" is expected, but not.\n");
+	}
 }
 
 // stmt = expr ";"
@@ -404,7 +438,7 @@ Node *primary(){
 		Node *node = calloc(1, sizeof(Node));
 
 		if (consume("(")){
-			node->kind = ND_FUNC;
+			node->kind = ND_FUNC_CALL;
 			node->func_name = ident->str;
 			node->name_len = ident->len;
 
@@ -418,6 +452,7 @@ Node *primary(){
 			node->total_argv_num = argv_cnt;
 			return node;
 		}
+
 		return argv(ident);
 	}
 

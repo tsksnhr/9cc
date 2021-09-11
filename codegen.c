@@ -33,6 +33,9 @@ void gen(Node *node){
 			printf("	mov rsp, rbp\n");
 			printf("	pop rbp\n");
 			printf("	ret\n");
+
+			epilogue();
+
 			return;
 
 		case ND_IF:
@@ -101,24 +104,79 @@ void gen(Node *node){
 			printf("	push rax\n");
 			return;
 
-		case ND_FUNC:
+		case ND_FUNC_CALL:
 			// evaluate arguments
 			for (int i = 0; i < node->total_argv_num; i++){
 				gen(node->argv_list[i]);
-
 				printf("	pop rax\n");
-				if (i == 0) printf("	mov rdi, rax\n");
-				if (i == 1) printf("	mov rsi, rax\n");
-				if (i == 2) printf("	mov rdx, rax\n");
-				if (i == 3) printf("	mov rcx, rax\n");
-				if (i == 4) printf("	mov r8, rax\n");
-				if (i == 5) printf("	mov r9, rax\n");
+
+				if (i == 0){
+					printf("	mov rdi, rax\n");
+				}
+				if (i == 1){
+					printf("	mov rsi, rax\n");
+				}
+				if (i == 2){
+					printf("	mov rdx, rax\n");
+				}
+				if (i == 3){
+					printf("	mov rcx, rax\n");
+				}
+				if (i == 4){
+					printf("	mov r8, rax\n");
+				}
+				if (i == 5){
+					printf("	mov r9, rax\n");
+				}
 			}
 
 			// jump to the address of function
 			printf("	call ");
 			for (int i = 0; i < node->name_len; i++) printf("%c", (node->func_name)[i]);
 			printf("\n");
+
+			printf("	push rax\n");
+
+			return;
+
+		case ND_FUNC_DECLEAR:
+			// label
+			for (int i = 0; i < node->name_len; i++) printf("%c", (node->func_name)[i]);
+			printf(":\n");
+
+			prologue();
+
+			// evaluate arguments
+			// make or acsess the address of loval variable
+			for (int i = 0; i < node->total_argv_num; i++){
+				gen_lval(node->argv_list[i]);
+
+				printf("	pop rax\n");
+				if (i == 0){
+					printf("	mov [rax], rdi\n");
+					printf("	push rdi\n");
+				}
+				if (i == 1){
+					printf("	mov [rax], rsi\n");
+					printf("	push rsi\n");
+				}
+				if (i == 2){
+					printf("	mov [rax], rdx\n");
+					printf("	push rdx\n");
+				}
+				if (i == 3){
+					printf("	mov [rax], rcx\n");
+					printf("	push rci\n");
+				}
+				if (i == 4){
+					printf("	mov [rax], r8\n");
+					printf("	push r8\n");
+				}
+				if (i == 5){
+					printf("	mov [rax], r9\n");
+					printf("	push r9\n");
+				}
+			}
 			return;
 
 		case ND_ASSIGN:
@@ -180,8 +238,8 @@ void gen(Node *node){
 // first part of assembly
 void com_gen(){
 	printf(".intel_syntax noprefix\n");
-	printf(".global main\n");
-	printf("main:\n");
+	printf(".globl main\n");
+//	printf("main:\n");
 	return;
 }
 

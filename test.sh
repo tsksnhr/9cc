@@ -6,7 +6,7 @@ assert(){
 
 	./9cc "$input" > tmp.s
 
-	cc -o tmp tmp.s testf.o
+	cc -o tmp tmp.s flist.o
 	./tmp
 
 	actual="$?"
@@ -24,11 +24,12 @@ call(){
 
 	./9cc "$input" > tmp.s
 
-	cc -o tmp tmp.s testf.o
+	cc -o tmp tmp.s flist.o
 	./tmp
 
 }
 
+<< comment
 
 assert 5 " 3 + 2;"
 assert 255 "z = 255;"
@@ -64,6 +65,15 @@ call "hoge(1, 2);"
 call "a = 1; b = 2; a = a + b; hoge(a, b);"
 call "a = 1; b = 2; c = 3; d = 4; e = 5; f = 6; piyo(a, b, c, d, e, f);"
 
-assert "a = 1; b = 2; hoge(a, b);"
+comment
+
+assert 5 "main(){a = 1; if (a == 1) return 5; else return 3;}"
+assert 3 "main(){a = 0; if (a == 1) return 5; else return 3;}"
+
+assert 4 "main(){return 1 + hoge(1, 2);}"
+assert 2 "main(){ return 1 + 1;}"
+assert 4 "tinyadd(x, y){return x + y;} main(){ return tinyadd(1, 3); }"
+assert 24 "foo(num){ a = 1; for(i = 1; i <= num; i = i + 1;){ a = a * i;} return a;} main(){return foo(4);}"
+assert 8 "fib(num){ if (num <= 2) return 1; else{ a = num - 2; b = num - 1; return fib(a) + fib(b);}} main(){return fib(6);}"
 
 echo OK
