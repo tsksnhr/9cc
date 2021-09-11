@@ -163,7 +163,8 @@ Token *tokenize(char *p){
 		}
 		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1)
 			|| !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "{", 1) || !strncmp(p, "}", 1) || !strncmp(p, ";", 1) || !strncmp(p, ",", 1)
-			|| !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1)){
+			|| !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1)
+			|| !strncmp(p, "&", 1)){
 			cur = new_token(TK_RESERVED, cur, p++, 1);
 			continue;
 		}
@@ -412,15 +413,26 @@ Node *mul(){
     }
 }
 
-// unary = ('+' | '-')? primay
+// unary = "+"? primay
+//	| "-"? primary
+//	| "&" unary
+//	| "*" unary
 Node *unary(){
 	if (consume("+")){
 		return new_node(ND_ADD, new_node_num(0), primary());
 	}
-	if (consume("-")){
+	else if (consume("-")){
 		return new_node(ND_SUB, new_node_num(0), primary());
 	}
-	return primary();
+	else if (consume("&")){
+		return new_node(ND_ADDRESS, unary(), NULL);
+	}
+	else if (consume("*")){
+		return new_node(ND_DEREF, unary(), NULL);
+	}
+	else{
+		return primary();
+	}
 }
 
 // primary = num

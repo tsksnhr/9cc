@@ -45,4 +45,7 @@ tiny_echo "fib(num){ if (num <= 2) return 1; else{ a = num - 2; b = num - 1; ret
 assert 9 "plusone(num){return num + 1;} plustwo(num){return num + 2;} main(){num = 2; a = plusone(num); b = plustwo(num); return num + a + b;}"
 assert 30 "a_plus_b(a, b){return a + b;} main(){ a_value = 10; b_value = 20; return a_plus_b(a_value, b_value);}"
 
+assert 1 "main(){a = 1; b = &a; return *b;}"
+assert 5 "main(){ x = 5; y = 1; z = &y + 8; return *z;}"
+
 echo OK

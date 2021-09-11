@@ -41,6 +41,8 @@ typedef enum {
 	ND_BLOCK,		// block
 	ND_FUNC_CALL,		// function call
 	ND_FUNC_DECLEAR,	// function declearation
+	ND_ADDRESS,		// for pointer "&"
+	ND_DEREF,		// for pointet "*"
 } NodeKind;
 
 
