@@ -14,7 +14,7 @@ int piyo(int a, int b, int c, int d, int e, int f){
 	return ans;
 }
 
-int printf_int(int a){
+int showint(int a){
 	printf("%d\n", a);
 	return 0;
 }
