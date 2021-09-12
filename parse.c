@@ -233,7 +233,7 @@ Node *program(){
 // func = typename ident "(" argv* ")"
 Node *func(){
 	if (!consume("int")){
-		error_at(token->str, "Not type declaration.\n");
+		error_at(token->str, "No type declaration.\n");
 	}
 
 	// get return value type of function
@@ -253,7 +253,7 @@ Node *func(){
 				if (argv_cnt != 0) expect(",");
 
 				if (!consume("int")){
-					error_at(token->str, "Not type declaration.\n");
+					error_at(token->str, "No type declaration.\n");
 				}
 
 				// get variable type
@@ -267,11 +267,12 @@ Node *func(){
 			return node;
 		}
 		else{
-			error_at(ident->str, "Function name is expected, but not.\n");
+			error_at(ident->str, "\"(\" is expected, but not.\n");
 		}
 	}
 	else{
-		error_at(ident->str, "\"(\" is expected, but not.\n");
+		error_at(ident->str, "Function name is expected, but not.\n");
+
 	}
 }
 
