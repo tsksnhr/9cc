@@ -31,26 +31,7 @@ tiny_echo(){
 
 }
 
-<< com
-
-assert 1 "main(){a = 1; return a;}"
-
-assert 5 "main(){a = 1; if (a == 1) return 5; else return 3;}"
-assert 3 "main(){a = 0; if (a == 1) return 5; else return 3;}"
-
-assert 4 "main(){return 1 + hoge(1, 2);}"
-assert 2 "main(){ return 1 + 1;}"
-assert 4 "tinyadd(x, y){return x + y;} main(){ return tinyadd(1, 3); }"
-assert 24 "foo(num){ a = 1; for(i = 1; i <= num; i = i + 1;){ a = a * i;} return a;} main(){return foo(4);}"
-tiny_echo "fib(num){ if (num <= 2) return 1; else{ a = num - 2; b = num - 1; return fib(a) + fib(b);}} main(){ for (i = 1; i <= 20; i = i + 1){ ans = fib(i); showint(ans);} return 0;}"
-
-assert 9 "plusone(num){return num + 1;} plustwo(num){return num + 2;} main(){num = 2; a = plusone(num); b = plustwo(num); return num + a + b;}"
-assert 30 "a_plus_b(a, b){return a + b;} main(){ a_value = 10; b_value = 20; return a_plus_b(a_value, b_value);}"
-
-assert 1 "main(){a = 1; b = &a; return *b;}"
-assert 5 "main(){ x = 5; y = 1; z = &y + 8; return *z;}"
-
-com
+tiny_echo "int fib(int num){ if (num <= 2) return 1; else {int a = num-2; int b = num-1; return fib(a) + fib(b);}} int main(){ for (int i = 1; i <= 10; i = i + 1){ int ans = fib(i); showint(ans);}}"
 
 assert 40 "int func(int a, int b){int c = a + b; return c;} int main(){int x = 10; for (int i = 0; i < 10; i = i + 1) x = x + 1; int y = 20; return func(x, y);}"
 assert 10 "int func(int a){ return a;} int main(){int a = 10; return func(a);}"
