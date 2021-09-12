@@ -59,6 +59,15 @@ struct Token {
 	int len;	// Token string's length
 };
 
+typedef struct Type Type;
+struct Type {
+	enum {
+		INT,
+		POINTER,
+	} type_id;
+	Type *pointer_to;
+};
+
 typedef struct Node Node;
 struct Node {
 	NodeKind kind;
@@ -77,14 +86,19 @@ struct Node {
 	int name_len;		// used if kind == ND_FUNC
 	Node *argv_list[6];	// used if kind == ND_FUNC
 	int total_argv_num;	// used if kind == ND_FUNC
+
+	Type *type;
 };
 
 typedef struct Lvar Lvar;
 struct Lvar {
 	Lvar *next;
+
 	char *name;
 	int len;
 	int offset;
+
+	Type *type;
 };
 
 // prototype declaraiton
@@ -116,13 +130,16 @@ Node *unary();
 Node *primary();
 Node *argv(Token *ident);
 Node *loadlvar(Token *ident);
-Node *decllvar(Token *ident);
+Node *decllvar(Token *ident, Type *type);
 
 // code generator
 void gen(Node *node);
 void com_gen();
 void prologue();
 void epilogue();
+
+// define variable type
+Type *define_variable_type();
 
 // Test func
 int foo();

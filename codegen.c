@@ -3,7 +3,7 @@
 
 void gen_lval(Node *node){
 	if (node->kind != ND_LVAR){
-		fprintf(stderr, "Not lvalue.\n");
+		fprintf(stderr, "Not left value.\n");
 	}
 
 	printf("	mov rax, rbp\n");
@@ -171,7 +171,15 @@ void gen(Node *node){
 			return;
 
 		case ND_ASSIGN:
-			gen_lval(node->lhs);	// address
+			// "*" is used for left hand side of "=", get variable's address directly
+			// if through ND_DEREF, left hand side of "=" will be right value
+			if (node->lhs->kind == ND_DEREF){
+				gen(node->lhs->lhs);	// push variable's address
+			}
+			else{
+				gen_lval(node->lhs);
+			}
+
 			gen(node->rhs);		// value
 
 			printf("	pop rdi\n");
@@ -181,11 +189,11 @@ void gen(Node *node){
 			return;
 
 		case ND_ADDRESS:
-			gen_lval(node->lhs);
+			gen_lval(node->lhs);	// get variable's offset from rbp, and pushed
 			return;
 
 		case ND_DEREF:
-			gen(node->lhs);
+			gen(node->lhs);		// load variable's value (address)
 			printf("	pop rax\n");
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");

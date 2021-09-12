@@ -37,4 +37,7 @@ comment
 assert 40 "int func(int a, int b){int c = a + b; return c;} int main(){int x = 10; for (int i = 0; i < 10; i = i + 1) x = x + 1; int y = 20; return func(x, y);}"
 assert 10 "int func(int a){ return a;} int main(){int a = 10; return func(a);}"
 
+assert 3 "int main(){ int a; a = 3; int *b; b = &a; return *b;}"
+assert 4 "int main(){ int x; int *y; y = &x; *y = 3 + 1; return x;}"
+
 echo OK

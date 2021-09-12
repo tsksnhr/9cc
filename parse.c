@@ -202,6 +202,22 @@ Node *new_node_num(int val){
     return node;
 }
 
+Type *define_variable_type(){
+	Type *type = calloc(1, sizeof(Type));
+	Type *base = type;
+
+	while (consume("*")){
+		type->type_id = POINTER;
+
+		Type *next = calloc(1, sizeof(Type));
+		type->pointer_to = next;
+		type = type->pointer_to;
+	}
+	type->type_id = INT;
+
+	return base;
+}
+
 // Production rules
 // program = func "{" stmt* "}"
 Node *program(){
@@ -220,6 +236,9 @@ Node *func(){
 		error_at(token->str, "Not type declaration.\n");
 	}
 
+	// get return value type of function
+	Type *ret_type = define_variable_type();
+
 	Token *ident = consume_ident();
 	if (ident){
 		Node *node = calloc(1, sizeof(Node));
@@ -237,9 +256,12 @@ Node *func(){
 					error_at(token->str, "Not type declaration.\n");
 				}
 
+				// get variable type
+				Type *argv_type = define_variable_type();
+
 				// argv_ident reqires variable declaration
 				Token *argv_ident = consume_ident();
-				node->argv_list[argv_cnt++] = decllvar(argv_ident);
+				node->argv_list[argv_cnt++] = decllvar(argv_ident, argv_type);
 			}
 			node->total_argv_num = argv_cnt;
 			return node;
@@ -461,10 +483,11 @@ Node *primary(){
 
 	// declaration of variable
 	if (consume("int")){
+		Type *var_type = define_variable_type();
 		Token *ident = consume_ident();
 
 		if (ident){
-			return decllvar(ident);
+			return decllvar(ident, var_type);
 		}
 		else{
 			error_at(token->str, "A identifier has to be after the typename.\n");
@@ -520,6 +543,7 @@ Node *loadlvar(Token *ident){
 		Lvar *lv = find_Lvar(ident);
 		if (lv){
 			node->offset = lv->offset;		// same offset memory from locals are reused
+			node->type = lv->type;
 			return node;
 		}
 		else{
@@ -529,7 +553,7 @@ Node *loadlvar(Token *ident){
 }
 
 // declare variable
-Node *decllvar(Token *ident){
+Node *decllvar(Token *ident, Type *type){
 	Node *node = calloc(1, sizeof(Node));
 
 	if (ident){
@@ -537,6 +561,7 @@ Node *decllvar(Token *ident){
 		Lvar *lv = find_Lvar(ident);
 		if (lv){
 			node->offset = lv->offset;		// same offset memory from locals are reused
+			node->type = lv->type;
 		}
 		else{
 			lv = calloc(1, sizeof(Lvar));
@@ -544,7 +569,10 @@ Node *decllvar(Token *ident){
 			lv->len = ident->len;
 			lv->next = locals;
 			lv->offset = locals->offset + 8;
+			lv->type = type;
+
 			node->offset = lv->offset;
+			node->type = lv->type;
 			locals = lv;
 		}
 		return node;
