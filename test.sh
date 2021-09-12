@@ -30,8 +30,9 @@ tiny_echo(){
 	./tmp
 
 }
-
+<< comment
 tiny_echo "int fib(int num){ if (num <= 2) return 1; else {int a = num-2; int b = num-1; return fib(a) + fib(b);}} int main(){ for (int i = 1; i <= 10; i = i + 1){ int ans = fib(i); showint(ans);}}"
+comment
 
 assert 40 "int func(int a, int b){int c = a + b; return c;} int main(){int x = 10; for (int i = 0; i < 10; i = i + 1) x = x + 1; int y = 20; return func(x, y);}"
 assert 10 "int func(int a){ return a;} int main(){int a = 10; return func(a);}"
