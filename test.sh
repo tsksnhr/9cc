@@ -31,6 +31,8 @@ tiny_echo(){
 
 }
 
+<< com
+
 assert 1 "main(){a = 1; return a;}"
 
 assert 5 "main(){a = 1; if (a == 1) return 5; else return 3;}"
@@ -47,5 +49,10 @@ assert 30 "a_plus_b(a, b){return a + b;} main(){ a_value = 10; b_value = 20; ret
 
 assert 1 "main(){a = 1; b = &a; return *b;}"
 assert 5 "main(){ x = 5; y = 1; z = &y + 8; return *z;}"
+
+com
+
+assert 40 "int func(int a, int b){int c = a + b; return c;} int main(){int x = 10; for (int i = 0; i < 10; i = i + 1) x = x + 1; int y = 20; return func(x, y);}"
+assert 10 "int func(int a){ return a;} int main(){int a = 10; return func(a);}"
 
 echo OK

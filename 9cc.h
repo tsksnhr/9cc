@@ -18,6 +18,7 @@ typedef enum {
 	TK_ELSE,	// else
 	TK_WHILE,	// while
 	TK_FOR,		// for
+	TK_TYPE		// variable's type
 } TokenKind;
 
 typedef enum {
@@ -40,9 +41,10 @@ typedef enum {
 	ND_FOR,			// for
 	ND_BLOCK,		// block
 	ND_FUNC_CALL,		// function call
-	ND_FUNC_DECLEAR,	// function declearation
+	ND_FUNC_DECLARE,	// function declearation
 	ND_ADDRESS,		// for pointer "&"
 	ND_DEREF,		// for pointet "*"
+	ND_INT			// variable type of int
 } NodeKind;
 
 
@@ -113,7 +115,8 @@ Node *mul();
 Node *unary();
 Node *primary();
 Node *argv(Token *ident);
-Node *lvar(Token *ident);
+Node *loadlvar(Token *ident);
+Node *decllvar(Token *ident);
 
 // code generator
 void gen(Node *node);

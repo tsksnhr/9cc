@@ -135,7 +135,7 @@ void gen(Node *node){
 
 			return;
 
-		case ND_FUNC_DECLEAR:
+		case ND_FUNC_DECLARE:
 			// label
 			for (int i = 0; i < node->name_len; i++) printf("%c", (node->func_name)[i]);
 			printf(":\n");

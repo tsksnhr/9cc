@@ -29,7 +29,8 @@ bool consume(char *op){
 			&& token->kind != TK_IF
 			&& token->kind != TK_ELSE
 			&& token->kind != TK_WHILE
-			&& token->kind != TK_FOR)
+			&& token->kind != TK_FOR
+			&& token->kind != TK_TYPE)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -72,6 +73,7 @@ int expect_number(){
 	token = token->next;
 	return val;
 }
+
 
 // check character whether it's element of token or not
 bool is_token_element(char c){
@@ -144,6 +146,11 @@ Token *tokenize(char *p){
 			p += 6;
 			continue;
 		}
+		if (strncmp(p, "int", 3) == 0 && !is_token_element(p[3])){
+			cur = new_token(TK_TYPE, cur, p, 3);
+			p += 3;
+			continue;
+		}
 		if (*p >= 'a' && *p <= 'z'){
 			int len = 1;
 			char *p_get;
@@ -207,16 +214,18 @@ Node *program(){
 	code[code_row] = NULL;
 }
 
-// func = ident "(" argv* ")"
+// func = typename ident "(" argv* ")"
 Node *func(){
+	if (!consume("int")){
+		error_at(token->str, "Not type declaration.\n");
+	}
 
 	Token *ident = consume_ident();
-
 	if (ident){
 		Node *node = calloc(1, sizeof(Node));
 
 		if (consume("(")){
-			node->kind = ND_FUNC_DECLEAR;
+			node->kind = ND_FUNC_DECLARE;
 			node->func_name = ident->str;
 			node->name_len = ident->len;
 
@@ -224,8 +233,13 @@ Node *func(){
 			while (!consume(")")){
 				if (argv_cnt != 0) expect(",");
 
+				if (!consume("int")){
+					error_at(token->str, "Not type declaration.\n");
+				}
+
+				// argv_ident reqires variable declaration
 				Token *argv_ident = consume_ident();
-				node->argv_list[argv_cnt++] = argv(argv_ident);
+				node->argv_list[argv_cnt++] = decllvar(argv_ident);
 			}
 			node->total_argv_num = argv_cnt;
 			return node;
@@ -445,10 +459,24 @@ Node *primary(){
 		return node;
 	}
 
+	// declaration of variable
+	if (consume("int")){
+		Token *ident = consume_ident();
+
+		if (ident){
+			return decllvar(ident);
+		}
+		else{
+			error_at(token->str, "A identifier has to be after the typename.\n");
+		}
+	}
+
+	// function call or get lvalue
 	Token *ident = consume_ident();
 	if (ident){
 		Node *node = calloc(1, sizeof(Node));
 
+		// function call
 		if (consume("(")){
 			node->kind = ND_FUNC_CALL;
 			node->func_name = ident->str;
@@ -458,45 +486,67 @@ Node *primary(){
 			while (!consume(")")){
 				if (argv_cnt != 0) expect(",");
 
+				// ident has to be declared variable
 				Token *argv_ident = consume_ident();
-				node->argv_list[argv_cnt++] = argv(argv_ident);
+				node->argv_list[argv_cnt++] = argv(argv_ident);		// argument (variable or number)
 			}
 			node->total_argv_num = argv_cnt;
 			return node;
 		}
 
-		return argv(ident);
-	}
+		// lvalue (not declaration)
+		return loadlvar(ident);
 
-	return argv(ident);
+	}
+	return argv(ident);		// number (ident == NULL)
 }
 
 // argv = num | lvar
 Node *argv(Token *ident){
 	if (ident != NULL){
-		return lvar(ident);
+		return loadlvar(ident);
 	}
 	else{
 		return new_node_num(expect_number());
 	}
 }
 
-Node *lvar(Token *ident){
+// load number from declared variable
+Node *loadlvar(Token *ident){
 	Node *node = calloc(1, sizeof(Node));
 
-	node->kind = ND_LVAR;
-	Lvar *lv = find_Lvar(ident);
-	if (lv){
-		node->offset = lv->offset;		// same offset memory from locals are reused
+	if (ident){
+		node->kind = ND_LVAR;
+		Lvar *lv = find_Lvar(ident);
+		if (lv){
+			node->offset = lv->offset;		// same offset memory from locals are reused
+			return node;
+		}
+		else{
+			error_at(ident->str, "Not declared yet.\n");
+		}
 	}
-	else{
-		lv = calloc(1, sizeof(Lvar));
-		lv->name = ident->str;
-		lv->len = ident->len;
-		lv->next = locals;
-		lv->offset = locals->offset + 8;
-		node->offset = lv->offset;
-		locals = lv;
+}
+
+// declare variable
+Node *decllvar(Token *ident){
+	Node *node = calloc(1, sizeof(Node));
+
+	if (ident){
+		node->kind = ND_LVAR;
+		Lvar *lv = find_Lvar(ident);
+		if (lv){
+			node->offset = lv->offset;		// same offset memory from locals are reused
+		}
+		else{
+			lv = calloc(1, sizeof(Lvar));
+			lv->name = ident->str;
+			lv->len = ident->len;
+			lv->next = locals;
+			lv->offset = locals->offset + 8;
+			node->offset = lv->offset;
+			locals = lv;
+		}
+		return node;
 	}
-	return node;
 }
