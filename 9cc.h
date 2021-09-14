@@ -137,6 +137,7 @@ void gen(Node *node);
 void com_gen();
 void prologue();
 void epilogue();
+void pointer_calc_arraignment(Node *node);
 
 // define variable type
 Type *define_variable_type();

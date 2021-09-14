@@ -203,14 +203,16 @@ void gen(Node *node){
 	gen(node->lhs);
 	gen(node->rhs);
 
-	printf("	pop rdi\n");
-	printf("	pop rax\n");
+	printf("	pop rdi\n");	// node->rhs is copied to rdi
+	printf("	pop rax\n");	// node->lhs is copied to rax
 
 	switch (node->kind){
 		case ND_ADD:
+			pointer_calc_arraignment(node);
 			printf("	add rax, rdi\n");
 			break;
 		case ND_SUB:
+			pointer_calc_arraignment(node);
 			printf("	sub rax, rdi\n");
 			break;
 		case ND_MUL:
@@ -268,3 +270,32 @@ void epilogue(){
 	return;
 }
 
+// pointer calculation
+// only used for int or pointer
+void pointer_calc_arraignment(Node *node){
+	if (node->lhs->type != NULL){
+		if (node->lhs->type->type_id == POINTER && node->lhs->type->pointer_to->type_id == INT){
+			printf("	push 4\n");
+			printf("	pop rsi\n");
+			printf("	imul rdi, rsi\n");
+		}
+		if (node->lhs->type->type_id == POINTER && node->lhs->type->pointer_to->type_id == POINTER){
+			printf("	push 8\n");
+			printf("	pop rsi\n");
+			printf("	imul rdi, rsi\n");
+		}
+	}
+	if (node->rhs->type != NULL){
+		if (node->rhs->type->type_id == POINTER && node->rhs->type->pointer_to->type_id == INT){
+			printf("	push 4\n");
+			printf("	pop rsi\n");
+			printf("	imul rax, rsi\n");
+		}
+		if (node->rhs->type->type_id == POINTER && node->rhs->type->pointer_to->type_id == POINTER){
+			printf("	push 8\n");
+			printf("	pop rsi\n");
+			printf("	imul rax, rsi\n");
+		}
+	}
+	return;
+}
