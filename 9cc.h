@@ -52,7 +52,7 @@ typedef enum {
 typedef struct Token Token;
 struct Token {
 	TokenKind kind;
-	Token *before;
+	Token *prev;
 	Token *next;
 	int val;	// number (if kind == TK_NUM)
 	char *str;	// Token string

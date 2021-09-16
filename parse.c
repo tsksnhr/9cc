@@ -95,7 +95,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len){
 	tok->len = len;
 
 	cur->next = tok;
-	tok->before = cur;
+	tok->prev = cur;
 	return tok;
 }
 
@@ -308,7 +308,7 @@ Node *stmt(){
 
 		if (consume("else")){
 			node->kind = ND_IFELSE;
-			token = token->before;		// after checking token, token-position is backed
+			token = token->prev;		// after checking token, token-position is backed
 		}
 		else{
 			node->kind = ND_IF;
