@@ -251,22 +251,8 @@ Node *func(){
 			int argv_cnt = 0;
 			while (!consume(")")){
 				if (argv_cnt != 0) expect(",");
+				node->argv_list[argv_cnt++] = unary();
 
-				if (!consume("int")){
-					error_at(token->str, "No type declaration.\n");
-				}
-
-				// get variable type
-				Type *argv_type = define_variable_type();
-
-				// argv_ident reqires variable declaration
-				Token *argv_ident = consume_ident();
-				if (argv_ident != NULL){
-					node->argv_list[argv_cnt++] = decllvar(argv_ident, argv_type);
-				}
-				else{
-					error_at(argv_ident->str, "invalid formal argument.\n");
-				}
 			}
 			node->total_argv_num = argv_cnt;
 			return node;
@@ -277,7 +263,6 @@ Node *func(){
 	}
 	else{
 		error_at(ident->str, "Function name is expected, but not.\n");
-
 	}
 }
 
@@ -572,22 +557,21 @@ Node *decllvar(Token *ident, Type *type){
 	if (ident != NULL){
 		node->kind = ND_LVAR;
 		Lvar *lv = find_Lvar(ident);
-		if (lv){
-			node->offset = lv->offset;		// same offset memory from locals are reused
-			node->type = lv->type;
-		}
-		else{
-			lv = calloc(1, sizeof(Lvar));
-			lv->name = ident->str;
-			lv->len = ident->len;
-			lv->next = locals;
-			lv->offset = locals->offset + 8;
-			lv->type = type;
 
-			node->offset = lv->offset;
-			node->type = lv->type;
-			locals = lv;
-		}
+		lv = calloc(1, sizeof(Lvar));
+		lv->name = ident->str;
+		lv->len = ident->len;
+		lv->next = locals;
+		lv->offset = locals->offset + 8;
+		lv->type = type;
+
+		node->offset = lv->offset;
+		node->type = lv->type;
+		locals = lv;
+
 		return node;
+	}
+	else {
+		error_at(ident->str, "identifier does not exist.\n");
 	}
 }

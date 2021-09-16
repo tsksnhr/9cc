@@ -54,4 +54,7 @@ assert 1 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q 
 assert 3 "int main(){int b; b = 3; insert_ten(b); return b;}"
 assert 10 "int main(){int b; b = 3; push_ten(&b); return b;}"
 
+assert 10 "int func(int *a){ *a = 10; return 0;} int main(){ a = 3; func(&a); return a;}"
+assert 30 "int func(int *a, int *b){ *a = 10; *b = 20; return 0;} int main(){ int a = 3; int b = 4; func(&a, &b); return a + b;}"
+
 echo OK
