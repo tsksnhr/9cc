@@ -240,7 +240,7 @@ Node *func(){
 	Type *ret_type = define_variable_type();
 
 	Token *ident = consume_ident();
-	if (ident){
+	if (ident != NULL){
 		Node *node = calloc(1, sizeof(Node));
 
 		if (consume("(")){
@@ -261,7 +261,12 @@ Node *func(){
 
 				// argv_ident reqires variable declaration
 				Token *argv_ident = consume_ident();
-				node->argv_list[argv_cnt++] = decllvar(argv_ident, argv_type);
+				if (argv_ident != NULL){
+					node->argv_list[argv_cnt++] = decllvar(argv_ident, argv_type);
+				}
+				else{
+					error_at(argv_ident->str, "invalid formal argument.\n");
+				}
 			}
 			node->total_argv_num = argv_cnt;
 			return node;
@@ -487,7 +492,7 @@ Node *primary(){
 		Type *var_type = define_variable_type();
 		Token *ident = consume_ident();
 
-		if (ident){
+		if (ident != NULL){
 			return decllvar(ident, var_type);
 		}
 		else{
@@ -497,7 +502,7 @@ Node *primary(){
 
 	// function call or get lvalue
 	Token *ident = consume_ident();
-	if (ident){
+	if (ident != NULL){
 		Node *node = calloc(1, sizeof(Node));
 
 		// function call
@@ -512,7 +517,12 @@ Node *primary(){
 
 				// ident has to be declared variable
 				Token *argv_ident = consume_ident();
-				node->argv_list[argv_cnt++] = argv(argv_ident);		// argument (variable or number)
+				if(argv_ident != NULL){
+					node->argv_list[argv_cnt++] = argv(argv_ident);		// argument (variable or number)
+				}
+				else{
+					node->argv_list[argv_cnt++] = expr();
+				}
 			}
 			node->total_argv_num = argv_cnt;
 			return node;
@@ -522,7 +532,9 @@ Node *primary(){
 		return loadlvar(ident);
 
 	}
-	return argv(ident);		// number (ident == NULL)
+	else{
+		return argv(ident);		// number (ident == NULL)
+	}
 }
 
 // argv = num | lvar
@@ -539,7 +551,7 @@ Node *argv(Token *ident){
 Node *loadlvar(Token *ident){
 	Node *node = calloc(1, sizeof(Node));
 
-	if (ident){
+	if (ident != NULL){
 		node->kind = ND_LVAR;
 		Lvar *lv = find_Lvar(ident);
 		if (lv){
@@ -557,7 +569,7 @@ Node *loadlvar(Token *ident){
 Node *decllvar(Token *ident, Type *type){
 	Node *node = calloc(1, sizeof(Node));
 
-	if (ident){
+	if (ident != NULL){
 		node->kind = ND_LVAR;
 		Lvar *lv = find_Lvar(ident);
 		if (lv){

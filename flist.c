@@ -43,3 +43,15 @@ int *tiny_alloc(int w, int x, int y, int z){
 //	fprintf(stdout, "%p\n", p);
 	return p;
 }
+
+int insert_ten(int x){
+
+	x = 10;
+	return 0;
+}
+
+int push_ten(int *x){
+
+	*x = 10;
+	return 0;
+}
