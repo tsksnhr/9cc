@@ -18,7 +18,8 @@ typedef enum {
 	TK_ELSE,	// else
 	TK_WHILE,	// while
 	TK_FOR,		// for
-	TK_TYPE		// variable's type
+	TK_TYPE,	// variable's type
+	TK_SIZEOF,	// sizeof operator
 } TokenKind;
 
 typedef enum {

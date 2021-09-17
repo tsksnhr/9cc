@@ -30,7 +30,8 @@ bool consume(char *op){
 			&& token->kind != TK_ELSE
 			&& token->kind != TK_WHILE
 			&& token->kind != TK_FOR
-			&& token->kind != TK_TYPE)
+			&& token->kind != TK_TYPE
+			&& token->kind != TK_SIZEOF)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
 		return false;
@@ -151,6 +152,11 @@ Token *tokenize(char *p){
 			p += 3;
 			continue;
 		}
+		if (strncmp(p, "sizeof", 6) == 0 && !is_token_element(p[6])){
+			cur = new_token(TK_SIZEOF, cur, p, 6);
+			p += 6;
+			continue;
+		}
 		if (*p >= 'a' && *p <= 'z'){
 			int len = 1;
 			char *p_get;
@@ -188,18 +194,26 @@ Token *tokenize(char *p){
 }
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs){
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = kind;
-    node->lhs = lhs;
-    node->rhs = rhs;
-    return node;
+	Node *node = calloc(1, sizeof(Node));
+
+	node->kind = kind;
+	node->lhs = lhs;
+	node->rhs = rhs;
+
+	return node;
 }
 
 Node *new_node_num(int val){
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_NUM;
-    node->val = val;
-    return node;
+   	Node *node = calloc(1, sizeof(Node));
+
+   	node->kind = ND_NUM;
+   	node->val = val;
+
+	Type *type = calloc(1, sizeof(Type));
+	type->type_id = INT;
+	node->type = type;
+
+	return node;
 }
 
 Type *define_variable_type(){
@@ -444,6 +458,7 @@ Node *mul(){
 //	| "-"? primary
 //	| "&" unary
 //	| "*" unary
+//	| "sizeof" unary
 Node *unary(){
 	if (consume("+")){
 		return new_node(ND_ADD, new_node_num(0), primary());
@@ -456,6 +471,59 @@ Node *unary(){
 	}
 	else if (consume("*")){
 		return new_node(ND_DEREF, unary(), NULL);
+	}
+	else if (consume("sizeof")){
+		// get argument's type
+		Node *tmp_node = unary();
+		Node *base = tmp_node;
+		bool ptr_flg = 0;
+
+		// left side search
+		while (tmp_node != NULL){
+			if (tmp_node->kind == ND_DEREF){
+				ptr_flg = 0;
+				break;
+			}
+			if (tmp_node->kind == ND_ADDRESS){
+				ptr_flg = 1;
+				break;
+			}
+			if (tmp_node->kind == ND_LVAR || tmp_node->kind == ND_NUM){
+				if (tmp_node->type->type_id == POINTER){
+					ptr_flg = 1;
+					break;
+				}
+			}
+			tmp_node = tmp_node->lhs;
+		}
+
+		tmp_node = base;	// get top node address
+		// right side search
+		while (tmp_node != NULL){
+			if (tmp_node->kind == ND_DEREF){
+				ptr_flg = 0;
+				break;
+			}
+			if (tmp_node->kind == ND_ADDRESS){
+				ptr_flg = 1;
+				break;
+			}
+			if (tmp_node->kind == ND_LVAR || tmp_node->kind == ND_NUM){
+				if (tmp_node->type->type_id == POINTER){
+					ptr_flg = 1;
+				}
+			}
+			tmp_node = tmp_node->rhs;
+		}
+
+		// return constatn value
+		if (ptr_flg == 1){
+			return new_node_num(8);
+		}
+		else{
+			return new_node_num(4);
+		}
+
 	}
 	else{
 		return primary();
