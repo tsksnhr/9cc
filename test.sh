@@ -67,5 +67,9 @@ assert 4 "int main(){ return sizeof(sizeof(1));}"
 assert 8 "int main(){ int *a; return sizeof(a);}"
 assert 4 "int main(){ int *a; return sizeof(*a);}"
 assert 8 "int main(){ int a; return sizeof(&a);}"
+assert 8 "int main(){ int **a; return sizeof(*a);}"
+assert 4 "int main(){ int **a; return sizeof(**a);}"
+assert 8 "int main(){ int ****a; return sizeof(**a);}"
+assert 8 "int main(){ int *a; return sizeof(&a);}"
 
 echo OK

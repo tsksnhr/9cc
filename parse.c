@@ -479,10 +479,30 @@ Node *unary(){
 		bool ptr_flg = 0;
 
 		// left side search
+		int deref_cnt = 0;
 		while (tmp_node != NULL){
 			if (tmp_node->kind == ND_DEREF){
-				ptr_flg = 0;
-				break;
+				deref_cnt++;
+				if (tmp_node->lhs->kind == ND_DEREF){
+					tmp_node = tmp_node->lhs;
+					continue;
+				}
+				else{
+					Type *derefed = tmp_node->lhs->type;
+					for (int i = 0; i < deref_cnt; i++){
+						derefed = derefed->pointer_to;
+					}
+					if (derefed->type_id == INT){
+						ptr_flg = 0;
+					}
+					else if (derefed->type_id == POINTER){
+						ptr_flg = 1;
+					}
+					else{
+						error_at(token->str, "invalid argument for sizeof.\n");
+					}
+					break;
+				}
 			}
 			if (tmp_node->kind == ND_ADDRESS){
 				ptr_flg = 1;
@@ -496,7 +516,7 @@ Node *unary(){
 			}
 			tmp_node = tmp_node->lhs;
 		}
-
+#if 0
 		tmp_node = base;	// get top node address
 		// right side search
 		while (tmp_node != NULL){
@@ -515,7 +535,7 @@ Node *unary(){
 			}
 			tmp_node = tmp_node->rhs;
 		}
-
+#endif
 		// return constatn value
 		if (ptr_flg == 1){
 			return new_node_num(8);
