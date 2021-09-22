@@ -638,12 +638,11 @@ Node *loadlvar(Token *ident){
 				Node *whole = calloc(1, sizeof(Node));
 				Node *ret = calloc(1, sizeof(Node));
 
-				// make new node
-				inside = primary();
+				inside = primary();		// make new node for inside of []
 				expect("]");
 
-				whole = new_node(ND_ADD, inside, node);
-				return ret = new_node(ND_DEREF, whole, NULL);
+				whole = new_node(ND_ADD, inside, node);			// make new node for " (array + num) "
+				return ret = new_node(ND_DEREF, whole, NULL);	// make new node for " *(array + num) "
 			}
 			return node;
 		}
