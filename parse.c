@@ -588,7 +588,7 @@ Node *primary(){
 				// ident has to be declared variable
 				Token *argv_ident = consume_ident();
 				if(argv_ident != NULL){
-					node->argv_list[argv_cnt++] = argv(argv_ident);		// argument (variable or number)
+					node->argv_list[argv_cnt++] = loadlvar(argv_ident);
 				}
 				else{
 					node->argv_list[argv_cnt++] = expr();
@@ -603,17 +603,7 @@ Node *primary(){
 
 	}
 	else{
-		return argv(ident);		// number (ident == NULL)
-	}
-}
-
-// argv = num | lvar
-Node *argv(Token *ident){
-	if (ident != NULL){
-		return loadlvar(ident);
-	}
-	else{
-		return new_node_num(expect_number());
+		return new_node_num(expect_number());		// number (ident == NULL)
 	}
 }
 

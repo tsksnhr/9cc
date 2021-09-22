@@ -135,7 +135,6 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
-Node *argv(Token *ident);
 Node *loadlvar(Token *ident);
 Node *decllvar(Token *ident, Type *type);
 
