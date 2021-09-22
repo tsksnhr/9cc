@@ -175,7 +175,8 @@ Token *tokenize(char *p){
 			continue;
 		}
 		if (!strncmp(p, "+", 1) || !strncmp(p, "-", 1) || !strncmp(p, "*", 1) || !strncmp(p, "/", 1)
-			|| !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "{", 1) || !strncmp(p, "}", 1) || !strncmp(p, ";", 1) || !strncmp(p, ",", 1)
+			|| !strncmp(p, "(", 1) || !strncmp(p, ")", 1) || !strncmp(p, "{", 1) || !strncmp(p, "}", 1) || !strncmp(p, "[", 1) || !strncmp(p, "]", 1)
+			|| !strncmp(p, ";", 1) || !strncmp(p, ",", 1)
 			|| !strncmp(p, "<", 1) || !strncmp(p, ">", 1) || !strncmp(p, "=", 1)
 			|| !strncmp(p, "&", 1)){
 			cur = new_token(TK_RESERVED, cur, p++, 1);
@@ -216,6 +217,7 @@ Node *new_node_num(int val){
 	return node;
 }
 
+// set varable type
 Type *define_variable_type(){
 	Type *type = calloc(1, sizeof(Type));
 	Type *base = type;
@@ -231,6 +233,17 @@ Type *define_variable_type(){
 
 	return base;
 }
+
+// set variable type of array's factor
+Type *define_array(Type *base){
+	Type *ret = calloc(1, sizeof(Type));
+
+	ret->pointer_to = base;
+	ret->type_id = ARRAY;
+
+	return ret;
+}
+
 
 // Production rules
 // program = func "{" stmt* "}"
@@ -252,8 +265,8 @@ Node *func(){
 
 	// get return value type of function
 	Type *ret_type = define_variable_type();
-
 	Token *ident = consume_ident();
+
 	if (ident != NULL){
 		Node *node = calloc(1, sizeof(Node));
 
@@ -476,7 +489,6 @@ Node *unary(){
 		// get argument's type
 		Node *tmp_node = unary();
 		Node *base = tmp_node;
-		bool ptr_flg = 0;
 
 		// left side search
 		int deref_cnt = 0;
@@ -493,57 +505,36 @@ Node *unary(){
 						derefed = derefed->pointer_to;
 					}
 					if (derefed->type_id == INT){
-						ptr_flg = 0;
+						return new_node_num(4);
 					}
 					else if (derefed->type_id == POINTER){
-						ptr_flg = 1;
+						return new_node_num(8);
 					}
 					else{
 						error_at(token->str, "invalid argument for sizeof.\n");
 					}
-					break;
 				}
 			}
 			if (tmp_node->kind == ND_ADDRESS){
-				ptr_flg = 1;
-				break;
+				return new_node_num(8);
 			}
 			if (tmp_node->kind == ND_LVAR || tmp_node->kind == ND_NUM){
 				if (tmp_node->type->type_id == POINTER){
-					ptr_flg = 1;
-					break;
+					return new_node_num(8);
+				}
+				else if (tmp_node->type->type_id == INT){
+					return new_node_num(4);
+				}
+				else if (tmp_node->type->type_id == ARRAY){
+					int tmp = tmp_node->type->array_size*4;
+					return new_node_num(tmp);
+				}
+				else{
+					error_at(token->str, "invalid argument for sizeof.\n");
 				}
 			}
 			tmp_node = tmp_node->lhs;
 		}
-#if 0
-		tmp_node = base;	// get top node address
-		// right side search
-		while (tmp_node != NULL){
-			if (tmp_node->kind == ND_DEREF){
-				ptr_flg = 0;
-				break;
-			}
-			if (tmp_node->kind == ND_ADDRESS){
-				ptr_flg = 1;
-				break;
-			}
-			if (tmp_node->kind == ND_LVAR || tmp_node->kind == ND_NUM){
-				if (tmp_node->type->type_id == POINTER){
-					ptr_flg = 1;
-				}
-			}
-			tmp_node = tmp_node->rhs;
-		}
-#endif
-		// return constatn value
-		if (ptr_flg == 1){
-			return new_node_num(8);
-		}
-		else{
-			return new_node_num(4);
-		}
-
 	}
 	else{
 		return primary();
@@ -564,6 +555,12 @@ Node *primary(){
 	if (consume("int")){
 		Type *var_type = define_variable_type();
 		Token *ident = consume_ident();
+
+		if (consume("[")){
+			var_type = define_array(var_type);
+			var_type->array_size = (size_t)(expect_number());
+			expect("]");
+		}
 
 		if (ident != NULL){
 			return decllvar(ident, var_type);
@@ -628,7 +625,8 @@ Node *loadlvar(Token *ident){
 		node->kind = ND_LVAR;
 		Lvar *lv = find_Lvar(ident);
 		if (lv){
-			node->offset = lv->offset;		// same offset memory from locals are reused
+			node->head = lv->head;		// same offset memory from locals are reused
+			node->tail = lv->tail;
 			node->type = lv->type;
 			return node;
 		}
@@ -650,10 +648,17 @@ Node *decllvar(Token *ident, Type *type){
 		lv->name = ident->str;
 		lv->len = ident->len;
 		lv->next = locals;
-		lv->offset = locals->offset + 8;
+		lv->head = locals->tail + 8;
+		if (type->type_id == ARRAY){
+			lv->tail = lv->head + 8*(int)(type->array_size);
+		}
+		else{
+			lv->tail = lv->head;
+		}
 		lv->type = type;
 
-		node->offset = lv->offset;
+		node->head = lv->head;
+		node->tail = lv->tail;
 		node->type = lv->type;
 		locals = lv;
 

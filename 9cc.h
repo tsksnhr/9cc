@@ -65,8 +65,10 @@ struct Type {
 	enum {
 		INT,
 		POINTER,
+		ARRAY,
 	} type_id;
 	Type *pointer_to;
+	size_t array_size;
 };
 
 typedef struct Node Node;
@@ -81,7 +83,8 @@ struct Node {
 	Node *blk_stmt[100];	// used if kind == ND_BLOCK
 
 	int val;		// used if kind == ND_NUM
-	int offset;		// used if kind == ND_LVAR
+	int head;		// used if kind == ND_LVAR
+	int tail;		// used if kind == ND_LVAR
 
 	char *func_name;	// used if kind == ND_FUNC
 	int name_len;		// used if kind == ND_FUNC
@@ -97,7 +100,8 @@ struct Lvar {
 
 	char *name;
 	int len;
-	int offset;
+	int head;	// offset from rbp
+	int tail;	// used if type == ARRAY
 
 	Type *type;
 };
@@ -116,6 +120,8 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rsh);
 Node *new_node_num(int val);
 Lvar *find_Lvar(Token *tok);
 bool is_token_element(char c);
+Type *define_variable_type();
+Type *define_array(Type *base);
 
 // producttion rules
 Node *program();
@@ -139,6 +145,7 @@ void com_gen();
 void prologue();
 void epilogue();
 void pointer_calc_arraignment(Node *node);
+void change_array_to_pointer(Node *node);
 
 // define variable type
 Type *define_variable_type();

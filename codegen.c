@@ -1,14 +1,22 @@
 // header
 #include "9cc.h"
 
+// get variable's offset from rbp
 void gen_lval(Node *node){
 	if (node->kind != ND_LVAR){
 		fprintf(stderr, "Not left value.\n");
+		exit(1);
 	}
 
 	printf("	mov rax, rbp\n");
-	printf("	sub rax, %d\n", node->offset);
+	if (node->type->type_id == ARRAY){
+		printf("	sub rax, %d\n", node->tail);
+	}
+	else{
+		printf("	sub rax, %d\n", node->head);
+	}
 	printf("	push rax\n");
+	printf("\n");
 
 	return;
 }
@@ -24,6 +32,7 @@ void gen(Node *node){
 				}
 				gen(node->blk_stmt[stmt_num]);
 				stmt_num++;
+				printf("\n");
 			}
 			return;
 
@@ -31,6 +40,7 @@ void gen(Node *node){
 			gen(node->lhs);
 			printf("	pop rax\n");
 			epilogue();
+			printf("\n");
 			return;
 
 		case ND_IF:
@@ -41,6 +51,7 @@ void gen(Node *node){
 
 			gen(node->rhs);
 			printf(".Lend000:\n");
+			printf("\n");
 			return;
 
 		case ND_IFELSE:
@@ -51,6 +62,7 @@ void gen(Node *node){
 
 			gen(node->rhs);
 			printf("jmp .Lend102\n");
+			printf("\n");
 			return;
 
 		case ND_ELSE:
@@ -58,6 +70,7 @@ void gen(Node *node){
 
 			gen(node->rhs);
 			printf(".Lend102:\n");
+			printf("\n");
 			return;
 
 		case ND_WHILE:
@@ -71,6 +84,7 @@ void gen(Node *node){
 			gen(node->rhs);
 			printf("        jmp .Lbegin203\n");
 			printf(".Lend204:\n");
+			printf("\n");
 			return;
 
 		case ND_FOR:
@@ -86,18 +100,34 @@ void gen(Node *node){
 			if (node->for_update != NULL) gen(node->for_update);
 			printf("	jmp .Lbegin305\n");
 			printf(".Lend306:\n");
+			printf("\n");
 			return;
 
 		case ND_NUM:
 			printf("	push %d\n", node->val);
+			printf("\n");
 			return ;
 
+		// load value from variable
 		case ND_LVAR:
-			gen_lval(node);
+			gen_lval(node);		// get offset value from rbp, it has been pushed
+
+			// copy pointer to head of array to rax
+			if (node->type->type_id == ARRAY){
+				printf("	pop rdi\n");
+				printf("	mov rax, rdi\n");
+				printf("	add rdi, 8\n");
+				printf("	mov [rax], rdi\n");	// copy head address of array to pointer
+				printf("	push rdi\n");
+
+				printf("\n");
+				return;
+			}
 
 			printf("	pop rax\n");
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");
+			printf("\n");
 			return;
 
 		case ND_FUNC_CALL:
@@ -132,7 +162,7 @@ void gen(Node *node){
 			printf("\n");
 
 			printf("	push rax\n");
-
+			printf("\n");
 			return;
 
 		case ND_FUNC_DECLARE:
@@ -168,6 +198,7 @@ void gen(Node *node){
 				}
 			}
 			printf("	push rax\n");
+			printf("\n");
 			return;
 
 		case ND_ASSIGN:
@@ -177,7 +208,7 @@ void gen(Node *node){
 				gen(node->lhs->lhs);	// push variable's address
 			}
 			else{
-				gen_lval(node->lhs);
+				gen_lval(node->lhs);	// push offset value from rbp
 			}
 
 			gen(node->rhs);		// value
@@ -186,17 +217,20 @@ void gen(Node *node){
 			printf("	pop rax\n");
 			printf("	mov [rax], rdi\n");
 			printf("	push rdi\n");
+			printf("\n");
 			return;
 
 		case ND_ADDRESS:
 			gen_lval(node->lhs);	// get variable's offset from rbp, and pushed
+			printf("\n");
 			return;
 
 		case ND_DEREF:
-			gen(node->lhs);		// load variable's value (address)
+			gen(node->lhs);		// load variable's value (if node is pointer, value is address)
 			printf("	pop rax\n");
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");
+			printf("\n");
 			return;
 	}
 
@@ -244,6 +278,7 @@ void gen(Node *node){
 			break;
 	}
 	printf("	push rax\n");
+	printf("\n");
 	return;
 }
 
@@ -274,24 +309,24 @@ void epilogue(){
 // only used for int or pointer
 void pointer_calc_arraignment(Node *node){
 	if (node->lhs->type != NULL){
-		if (node->lhs->type->type_id == POINTER && node->lhs->type->pointer_to->type_id == INT){
+		if ((node->lhs->type->type_id == POINTER || node->lhs->type->type_id == ARRAY) && node->lhs->type->pointer_to->type_id == INT){
 			printf("	push 4\n");
 			printf("	pop rsi\n");
 			printf("	imul rdi, rsi\n");
 		}
-		if (node->lhs->type->type_id == POINTER && node->lhs->type->pointer_to->type_id == POINTER){
+		if ((node->lhs->type->type_id == POINTER || node->lhs->type->type_id == ARRAY) && node->lhs->type->pointer_to->type_id == POINTER){
 			printf("	push 8\n");
 			printf("	pop rsi\n");
 			printf("	imul rdi, rsi\n");
 		}
 	}
 	if (node->rhs->type != NULL){
-		if (node->rhs->type->type_id == POINTER && node->rhs->type->pointer_to->type_id == INT){
+		if ((node->rhs->type->type_id == POINTER || node->rhs->type->type_id == ARRAY) && node->rhs->type->pointer_to->type_id == INT){
 			printf("	push 4\n");
 			printf("	pop rsi\n");
 			printf("	imul rax, rsi\n");
 		}
-		if (node->rhs->type->type_id == POINTER && node->rhs->type->pointer_to->type_id == POINTER){
+		if ((node->rhs->type->type_id == POINTER || node->rhs->type->type_id == ARRAY) && node->rhs->type->pointer_to->type_id == POINTER){
 			printf("	push 8\n");
 			printf("	pop rsi\n");
 			printf("	imul rax, rsi\n");
@@ -299,3 +334,4 @@ void pointer_calc_arraignment(Node *node){
 	}
 	return;
 }
+

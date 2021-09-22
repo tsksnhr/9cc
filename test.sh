@@ -45,11 +45,12 @@ assert 4 "int main(){ int x; int *y; y = &x; *y = 3 + 1; return x;}"
 
 assert 2 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 1; showptr(q); return *q;}"
 assert 4 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 2; showptr(q); return *q;}"
-assert 8 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 3; showptr(q); return *q;}"
+assert 8 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 3; showptr(q); return *(p + 3);}"
 
 assert 4 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 3; q = q - 1; showptr(q); return *q;}"
 assert 2 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 3; q = q - 2; showptr(q); return *q;}"
 assert 1 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); int *q; q = p + 3; q = q - 3; showptr(q); return *q;}"
+assert 5 "int main(){ int *p; p = tiny_alloc(1, 2, 4, 8); showptr(p); *(p + 1) = 5; return *(p + 1);}"
 
 assert 3 "int main(){ int **p; int *q; int r; q = &r; p = &q; int **s; s = p + 1; showptr(p); showptr(s); r = 3; return **p;}"
 
@@ -71,5 +72,16 @@ assert 8 "int main(){ int **a; return sizeof(*a);}"
 assert 4 "int main(){ int **a; return sizeof(**a);}"
 assert 8 "int main(){ int ****a; return sizeof(**a);}"
 assert 8 "int main(){ int *a; return sizeof(&a);}"
+
+assert 1 "int main(){ int a[10]; *a = 1; return *a;}"
+assert 7 "int main(){ int a[10]; *a = 1; *(a + 1) = 7; int *p = a + 1; showptr(a); showptr(p); return *(a + 1);}"
+assert 1 "int main(){ int a[10]; *a = 1; int *p = a; return *p;}"
+assert 2 "int main(){ int a[10]; *a = 1; *(a + 1) = 2; int *p = a; return *(p + 1);}"
+assert 3 "int main(){ int a[10]; *a = 1; *(a + 1) = 2; int *p; p = a; return *p + *(p + 1);}"
+
+assert 4 "int main(){ int a[10]; return sizeof(*a);}"
+assert 40 "int main(){ int a[10]; return sizeof(a);}"
+
+assert 1 "int main(){ int a[10]; *(a + 5) = 7; int *p = &a; return p == &a;}"
 
 echo OK
