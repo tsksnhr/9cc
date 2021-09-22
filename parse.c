@@ -625,9 +625,26 @@ Node *loadlvar(Token *ident){
 		node->kind = ND_LVAR;
 		Lvar *lv = find_Lvar(ident);
 		if (lv){
-			node->head = lv->head;		// same offset memory from locals are reused
+			// same offset from rbp is copied
+			node->head = lv->head;
 			node->tail = lv->tail;
+			// same type is copied, but it's pointer
 			node->type = lv->type;
+
+			// replace array with pointer
+			if (consume("[")){
+				// allocate memory
+				Node *inside = calloc(1, sizeof(Node));
+				Node *whole = calloc(1, sizeof(Node));
+				Node *ret = calloc(1, sizeof(Node));
+
+				// make new node
+				inside = primary();
+				expect("]");
+
+				whole = new_node(ND_ADD, inside, node);
+				return ret = new_node(ND_DEREF, whole, NULL);
+			}
 			return node;
 		}
 		else{
