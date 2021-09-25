@@ -33,7 +33,7 @@ typedef enum {
 	ND_EQ_RELATIONAL,	// <=, >=
 	ND_NUM,			// number
 	ND_ASSIGN,		// =
-	ND_LVAR,		// local variable
+	ND_LOCAL_LVAR,		// local variable
 	ND_RETURN,		// return
 	ND_IF,			// if
 	ND_IFELSE,		// if ... else
@@ -45,7 +45,9 @@ typedef enum {
 	ND_FUNC_DECLARE,	// function declearation
 	ND_ADDRESS,		// for pointer "&"
 	ND_DEREF,		// for pointet "*"
-	ND_INT			// variable type of int
+	ND_INT,			// variable type of int
+	ND_GLOBAL_LVAR,			// global variable
+	ND_GLOBAL_LVAR_DECL,	// global variable declaring
 } NodeKind;
 
 
@@ -92,6 +94,8 @@ struct Node {
 	int total_argv_num;	// used if kind == ND_FUNC
 
 	Type *type;
+
+	char *glv_name;		// used if kind == ND_GLOBAL
 };
 
 typedef struct Lvar Lvar;
@@ -118,14 +122,16 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize(char *p);
 Node *new_node(NodeKind kind, Node *lhs, Node *rsh);
 Node *new_node_num(int val);
-Lvar *find_Lvar(Token *tok);
+Lvar *find_local_Lvar(Token *tok);
+Lvar *find_global_Lvar(Token *tok);
 bool is_token_element(char c);
 Type *define_variable_type();
 Type *define_array(Type *base);
 
 // producttion rules
 Node *program();
-Node *func();
+Node *glv();
+Node *func(Type *type, Token *ident);
 Node *stmt();
 Node *assign();
 Node *expr();
@@ -136,7 +142,7 @@ Node *mul();
 Node *unary();
 Node *primary();
 Node *loadlvar(Token *ident);
-Node *decllvar(Token *ident, Type *type);
+Node *decllvar(Token *ident, Type *type, int node_type);
 
 // code generator
 void gen(Node *node);
@@ -145,12 +151,10 @@ void prologue();
 void epilogue();
 void pointer_calc_arraignment(Node *node);
 void change_array_to_pointer(Node *node);
+void gen_global_alloc(Node *node);
 
 // define variable type
 Type *define_variable_type();
-
-// Test func
-int foo();
 
 
 // Global variable
@@ -158,3 +162,4 @@ extern Token *token;
 extern char *user_input;
 extern Node *code[];
 extern Lvar *locals;
+extern Lvar *globals;

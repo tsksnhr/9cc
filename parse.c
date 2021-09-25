@@ -4,7 +4,8 @@
 Token *token;		// Token that focused on now
 char *user_input;	// input data for error message
 Node *code[100];	// stoage for multiple Node (separated by ";")
-Lvar *locals;		// head of local varuable
+Lvar *locals;		// head of local variable
+Lvar *globals;		// head of global variable
 int code_row;		// number of lines
 
 // output error message and error position to stderr
@@ -101,8 +102,17 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len){
 }
 
 // search local variables
-Lvar *find_Lvar(Token *tok){
+Lvar *find_local_Lvar(Token *tok){
 	for (Lvar *lv = locals; lv; lv = lv->next){
+		if (lv->len == tok->len && !memcmp(lv->name, tok->str, lv->len)){
+			return lv;
+		}
+	}
+	return NULL;
+}
+
+Lvar *find_global_Lvar(Token *tok){
+	for (Lvar *lv = globals; lv; lv = lv->next){
 		if (lv->len == tok->len && !memcmp(lv->name, tok->str, lv->len)){
 			return lv;
 		}
@@ -246,50 +256,56 @@ Type *define_array(Type *base){
 
 
 // Production rules
-// program = func "{" stmt* "}"
+// program = glv* func "{" stmt* "}"
 Node *program(){
 	int code_row = 0;
-
 	while (!at_eof()){
-		code[code_row++] = func();
+		while (true){
+			// chech type declare
+			if (!consume("int")){
+				error_at(token->str, "No type declaration.\n");
+			}
+			// get ident-name and -type
+			Type *type = define_variable_type();
+			Token *ident = consume_ident();
+
+			if (consume("(")){
+				code[code_row++] = func(type, ident);		// function declare
+				break;
+			}
+			else{
+				code[code_row++] = decllvar(ident, type, ND_GLOBAL_LVAR_DECL);
+				expect(";");
+			}
+		}
 		code[code_row++] = stmt();
 	}
 	code[code_row] = NULL;
 }
 
 // func = typename ident "(" argv* ")"
-Node *func(){
-	if (!consume("int")){
-		error_at(token->str, "No type declaration.\n");
-	}
+Node *func(Type *type, Token *ident){
+	Node *node = calloc(1, sizeof(Node));
 
 	// get return value type of function
-	Type *ret_type = define_variable_type();
-	Token *ident = consume_ident();
+	Type *ret_type = type;
+	Token *fname = ident;
 
-	if (ident != NULL){
-		Node *node = calloc(1, sizeof(Node));
+	if (fname != NULL){
+		node->kind = ND_FUNC_DECLARE;
+		node->func_name = fname->str;
+		node->name_len = fname->len;
 
-		if (consume("(")){
-			node->kind = ND_FUNC_DECLARE;
-			node->func_name = ident->str;
-			node->name_len = ident->len;
-
-			int argv_cnt = 0;
-			while (!consume(")")){
-				if (argv_cnt != 0) expect(",");
-				node->argv_list[argv_cnt++] = unary();
-
-			}
-			node->total_argv_num = argv_cnt;
-			return node;
+		int argv_cnt = 0;
+		while (!consume(")")){
+			if (argv_cnt != 0) expect(",");
+			node->argv_list[argv_cnt++] = unary();
 		}
-		else{
-			error_at(ident->str, "\"(\" is expected, but not.\n");
-		}
+		node->total_argv_num = argv_cnt;
+		return node;
 	}
 	else{
-		error_at(ident->str, "Function name is expected, but not.\n");
+		error_at(fname->str, "Function name is expected, but not.\n");
 	}
 }
 
@@ -518,7 +534,7 @@ Node *unary(){
 			if (tmp_node->kind == ND_ADDRESS){
 				return new_node_num(8);
 			}
-			if (tmp_node->kind == ND_LVAR || tmp_node->kind == ND_NUM){
+			if (tmp_node->kind == ND_LOCAL_LVAR || tmp_node->kind == ND_NUM){
 				if (tmp_node->type->type_id == POINTER){
 					return new_node_num(8);
 				}
@@ -563,7 +579,7 @@ Node *primary(){
 		}
 
 		if (ident != NULL){
-			return decllvar(ident, var_type);
+			return decllvar(ident, var_type, ND_LOCAL_LVAR);
 		}
 		else{
 			error_at(token->str, "A identifier has to be after the typename.\n");
@@ -612,9 +628,10 @@ Node *loadlvar(Token *ident){
 	Node *node = calloc(1, sizeof(Node));
 
 	if (ident != NULL){
-		node->kind = ND_LVAR;
-		Lvar *lv = find_Lvar(ident);
+		Lvar *lv = find_local_Lvar(ident);
 		if (lv){
+			node->kind = ND_LOCAL_LVAR;
+
 			// same offset from rbp is copied
 			node->head = lv->head;
 			node->tail = lv->tail;
@@ -637,38 +654,97 @@ Node *loadlvar(Token *ident){
 			return node;
 		}
 		else{
-			error_at(ident->str, "Not declared yet.\n");
+			lv = find_global_Lvar(ident);
+			if (lv){
+				node->kind = ND_GLOBAL_LVAR;
+
+				// same offset from rbp is copied
+				node->head = lv->head;
+				node->tail = lv->tail;
+				// same type is copied, but it's pointer
+				node->type = lv->type;
+				// get variable's name
+				node->glv_name = lv->name;
+				node->name_len = lv->len;
+
+				// replace array with pointer
+				if (consume("[")){
+					// allocate memory
+					Node *inside = calloc(1, sizeof(Node));
+					Node *whole = calloc(1, sizeof(Node));
+					Node *ret = calloc(1, sizeof(Node));
+
+					inside = primary();		// make new node for inside of []
+					expect("]");
+
+					whole = new_node(ND_ADD, inside, node);			// make new node for " (array + num) "
+					return ret = new_node(ND_DEREF, whole, NULL);	// make new node for " *(array + num) "
+				}
+				return node;
+			}
+			else{
+				error_at(ident->str, "Not declared yet.\n");
+			}
 		}
 	}
 }
 
 // declare variable
-Node *decllvar(Token *ident, Type *type){
+Node *decllvar(Token *ident, Type *type, int node_kind){
 	Node *node = calloc(1, sizeof(Node));
 
 	if (ident != NULL){
-		node->kind = ND_LVAR;
-		Lvar *lv = find_Lvar(ident);
+		node->kind = node_kind;
+//		Lvar *lv = find_local_Lvar(ident);
 
-		lv = calloc(1, sizeof(Lvar));
-		lv->name = ident->str;
-		lv->len = ident->len;
-		lv->next = locals;
-		lv->head = locals->tail + 8;
-		if (type->type_id == ARRAY){
-			lv->tail = lv->head + 8*(int)(type->array_size);
+		if (node_kind == ND_LOCAL_LVAR){
+			Lvar *lv = calloc(1, sizeof(Lvar));
+			lv->name = ident->str;
+			lv->len = ident->len;
+			lv->next = locals;
+			lv->head = locals->tail + 8;
+			if (type->type_id == ARRAY){
+				lv->tail = lv->head + 8*(int)(type->array_size);
+			}
+			else{
+				lv->tail = lv->head;
+			}
+			lv->type = type;
+
+			node->head = lv->head;
+			node->tail = lv->tail;
+			node->type = lv->type;
+			locals = lv;
+
+			return node;
 		}
-		else{
-			lv->tail = lv->head;
+		else if (node_kind == ND_GLOBAL_LVAR_DECL){
+//			lv = find_global_Lvar(ident);
+//			if (lv){
+				Lvar *lv = calloc(1, sizeof(Lvar));
+				lv->name = ident->str;
+				lv->len = ident->len;
+				lv->next = globals;
+				lv->head = globals->tail + 8;
+				if (type->type_id == ARRAY){
+					lv->tail = lv->head + 8*(int)(type->array_size);
+				}
+				else{
+					lv->tail = lv->head;
+				}
+				lv->type = type;
+
+				node->head = lv->head;
+				node->tail = lv->tail;
+				node->glv_name = lv->name;
+				node->name_len = lv->len;
+//				strncpy(node->glv_name, ident->str, ident->len + 1);
+				node->type = lv->type;
+				globals = lv;
+
+				return node;
+//			}
 		}
-		lv->type = type;
-
-		node->head = lv->head;
-		node->tail = lv->tail;
-		node->type = lv->type;
-		locals = lv;
-
-		return node;
 	}
 	else {
 		error_at(ident->str, "identifier does not exist.\n");

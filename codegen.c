@@ -1,38 +1,66 @@
 // header
 #include "9cc.h"
 
-// get variable's offset from rbp
-void gen_lval(Node *node){
-	if (node->kind != ND_LVAR){
-		fprintf(stderr, "Not left value.\n");
-		exit(1);
-	}
-
-	printf("	mov rax, rbp\n");
-	if (node->type->type_id == ARRAY){
-		printf("	sub rax, %d\n", node->tail);
+// get declare code of global variable
+void gen_global_alloc(Node *node){
+	if (node->kind == ND_GLOBAL_LVAR_DECL){
+		printf(".comm	");
+		// get variable's name
+		for (int i = 0; i < node->name_len; i++) printf("%c", (node->glv_name)[i]);
+		if (node->type->type_id == ARRAY){
+			printf(",	%d,	%d\n", node->tail, node->tail);
+		}
+		else{
+			printf(",	%d,	%d\n", node->head, node->head);
+		}
 	}
 	else{
-		printf("	sub rax, %d\n", node->head);
+		fprintf(stderr, "invalid call.\n");
+		exit(1);
 	}
-	printf("	push rax\n");
-	printf("\n");
 
 	return;
 }
 
+// get variable's offset from rbp
+void gen_lval(Node *node){
+
+	if (node->kind == ND_LOCAL_LVAR){
+		printf("	mov rax, rbp\n");
+		if (node->type->type_id == ARRAY){
+			printf("	sub rax, %d\n", node->tail);
+		}
+		else{
+			printf("	sub rax, %d\n", node->head);
+		}
+	}
+	printf("	push rax\n");
+
+	return;
+}
+
+// get value from already declared global variable
+void gen_gl_lval(Node *node){
+
+	printf("	mov eax, DWORD PTR ");
+	for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
+	printf("[rip]\n");
+	printf("	push rax\n");
+
+	return;
+}
 
 void gen(Node *node){
 	int stmt_num = 0;
 	switch (node->kind){
 		case ND_BLOCK:
 			while (node->blk_stmt[stmt_num] != NULL){
-				if (stmt_num != 0){
-					printf("	pop rax\n");
-				}
-				gen(node->blk_stmt[stmt_num]);
-				stmt_num++;
-				printf("\n");
+//				if (stmt_num != 0){
+//					printf("	pop rax\n");
+//				}
+				gen(node->blk_stmt[stmt_num++]);
+				printf("	pop rax\n");
+//				stmt_num++;
 			}
 			return;
 
@@ -40,7 +68,6 @@ void gen(Node *node){
 			gen(node->lhs);
 			printf("	pop rax\n");
 			epilogue();
-			printf("\n");
 			return;
 
 		case ND_IF:
@@ -51,7 +78,6 @@ void gen(Node *node){
 
 			gen(node->rhs);
 			printf(".Lend000:\n");
-			printf("\n");
 			return;
 
 		case ND_IFELSE:
@@ -62,7 +88,6 @@ void gen(Node *node){
 
 			gen(node->rhs);
 			printf("jmp .Lend102\n");
-			printf("\n");
 			return;
 
 		case ND_ELSE:
@@ -70,7 +95,6 @@ void gen(Node *node){
 
 			gen(node->rhs);
 			printf(".Lend102:\n");
-			printf("\n");
 			return;
 
 		case ND_WHILE:
@@ -84,7 +108,6 @@ void gen(Node *node){
 			gen(node->rhs);
 			printf("        jmp .Lbegin203\n");
 			printf(".Lend204:\n");
-			printf("\n");
 			return;
 
 		case ND_FOR:
@@ -100,17 +123,16 @@ void gen(Node *node){
 			if (node->for_update != NULL) gen(node->for_update);
 			printf("	jmp .Lbegin305\n");
 			printf(".Lend306:\n");
-			printf("\n");
 			return;
 
 		case ND_NUM:
 			printf("	push %d\n", node->val);
-			printf("\n");
 			return ;
 
 		// load value from variable
-		case ND_LVAR:
-			gen_lval(node);		// get offset value from rbp, it has been pushed
+		case ND_LOCAL_LVAR:
+			// get offset value from rbp or .zero, it has been pushed
+			gen_lval(node);
 
 			// copy pointer to head of array to rax
 			if (node->type->type_id == ARRAY){
@@ -119,17 +141,22 @@ void gen(Node *node){
 				printf("	add rdi, 8\n");
 				printf("	mov [rax], rdi\n");	// copy head address of array to pointer
 				printf("	push rdi\n");
-
-				printf("\n");
 				return;
 			}
 
 			printf("	pop rax\n");
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");
-			printf("\n");
 			return;
 
+		case ND_GLOBAL_LVAR:
+			gen_gl_lval(node);
+			return;
+
+		case ND_GLOBAL_LVAR_DECL:
+			gen_global_alloc(node);
+			return;
+		
 		case ND_FUNC_CALL:
 			// evaluate arguments
 			for (int i = 0; i < node->total_argv_num; i++){
@@ -162,7 +189,6 @@ void gen(Node *node){
 			printf("\n");
 
 			printf("	push rax\n");
-			printf("\n");
 			return;
 
 		case ND_FUNC_DECLARE:
@@ -198,7 +224,6 @@ void gen(Node *node){
 				}
 			}
 			printf("	push rax\n");
-			printf("\n");
 			return;
 
 		case ND_ASSIGN:
@@ -207,22 +232,37 @@ void gen(Node *node){
 			if (node->lhs->kind == ND_DEREF){
 				gen(node->lhs->lhs);	// push variable's address
 			}
+			else if (node->lhs->kind == ND_GLOBAL_LVAR){
+				// skip
+			}
 			else{
 				gen_lval(node->lhs);	// push offset value from rbp
 			}
 
-			gen(node->rhs);		// value
-
+			gen(node->rhs);		// right value
 			printf("	pop rdi\n");
+
+			// process for clobal variable
+			if (node->lhs->kind == ND_GLOBAL_LVAR){
+				printf("	mov DWORD PTR ");
+				for (int i = 0; i < node->lhs->name_len; i++) printf("%c", node->lhs->glv_name[i]);
+				printf("[rip], edi\n");
+
+				printf("	mov eax, DWORD PTR ");
+				for (int i = 0; i < node->lhs->name_len; i++) printf("%c", node->lhs->glv_name[i]);
+				printf("[rip]\n");
+				printf("	push rax\n");
+				return;
+			}
+
+			// process for local variable
 			printf("	pop rax\n");
 			printf("	mov [rax], rdi\n");
 			printf("	push rdi\n");
-			printf("\n");
 			return;
 
 		case ND_ADDRESS:
 			gen_lval(node->lhs);	// get variable's offset from rbp, and pushed
-			printf("\n");
 			return;
 
 		case ND_DEREF:
@@ -230,7 +270,6 @@ void gen(Node *node){
 			printf("	pop rax\n");
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");
-			printf("\n");
 			return;
 	}
 
@@ -278,7 +317,6 @@ void gen(Node *node){
 			break;
 	}
 	printf("	push rax\n");
-	printf("\n");
 	return;
 }
 

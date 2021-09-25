@@ -11,9 +11,9 @@ int main(int argc, char **argv){
 	user_input = argv[1];
 	token = tokenize(argv[1]);
 
-	// get memory for head of local variables
-	// If this does not exist, the pointer of locals is NULL.
+	// get memory for head of local and global variables
 	locals = calloc(1, sizeof(Lvar));
+	globals = calloc(1, sizeof(Lvar));
 
 	// make data-tree (each tree saved in code[100])
 	program();
@@ -25,7 +25,7 @@ int main(int argc, char **argv){
 		gen(code[i]);
 
 		// pop last value of each foluma
-		printf("	pop rax\n");
+//		printf("	pop rax\n");
 	}
 
 	return 0;

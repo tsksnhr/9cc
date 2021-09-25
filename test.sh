@@ -87,4 +87,8 @@ assert 1 "int main(){ int a[10]; *(a + 5) = 7; int *p = &a; return p == &a;}"
 assert 5 "int main(){ int a[10]; a[0] = 2; a[1] = 3; return a[0] + a[1];}"
 assert 7 "int main(){ int a[10]; for (int i = 0; i < 10; i = i + 1){ a[i] = i;} return a[7];}"
 
+assert 1 "int var; int main(){ var = 1; return var;}"
+assert 2 "int gv; int main(){ gv = 1; return gv + 1;}"
+assert 3 "int a; int b; int main(){ a = 1;  b = 2; return a + b;}"
+
 echo OK
