@@ -42,14 +42,30 @@ void gen_lval(Node *node){
 // get value from already declared global variable
 void gen_global_as_rval(Node *node){
 
+	// copy head addres of array
+	if (node->type->type_id == ARRAY){
+		printf("	lea rax, ");
+		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);	// variable name
+		printf("[rip+8]\n");
+
+		printf("	mov ");
+		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);	// variable name
+		printf("[rip], rax\n");
+
+		// get value from global variable
+		printf("	mov rax, QWORD PTR ");
+		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
+		printf("[rip]\n");
+		printf("	push rax\n");
+
+		return;
+	}
+
+	// get value from global variable
 	printf("	mov eax, DWORD PTR ");
 	for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
-	if (node->type->type_id == ARRAY){
-		printf("[rip+%d]\n", node->type->array_size);
-	}
-	else{
-		printf("[rip]\n");
-	}
+	printf("[rip]\n");
+
 	printf("	push rax\n");
 
 	return;
@@ -60,7 +76,7 @@ void gen_global_address(Node *node){
 
 	printf("	lea rax, ");
 	for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
-	printf("[rip]\n", node->type->array_size);
+	printf("[rip]\n");
 	printf("	push rax\n");
 
 	return;
