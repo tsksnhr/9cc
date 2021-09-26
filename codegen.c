@@ -174,10 +174,10 @@ void gen(Node *node){
 
 		// load value from variable
 		case ND_LOCAL_LVAR:
-			// get offset value from rbp or .zero, it has been pushed
+			// get offset value from rbp, it has been pushed
 			gen_lval(node);
 
-			// copy pointer to head of array to rax
+			// return pointer that have head of array, and push it to rax
 			if (node->type->type_id == ARRAY){
 				printf("	pop rdi\n");
 				printf("	mov rax, rdi\n");
@@ -188,6 +188,11 @@ void gen(Node *node){
 			}
 
 			printf("	pop rax\n");
+			if (node->type->type_id == CHAR){
+				printf("	movsx rax, BYTE PTR [rax]\n");
+				printf("	push rax\n");
+				return;
+			}
 			printf("	mov rax, [rax]\n");
 			printf("	push rax\n");
 			return;
@@ -285,7 +290,13 @@ void gen(Node *node){
 			gen(node->rhs);		// right value
 			printf("	pop rdi\n");
 
-			// process for clobal variable
+			if (node->lhs->type != NULL && node->lhs->type->type_id == CHAR){
+				printf("	mov [rax], dil\n");
+				printf("	push rdi\n");
+				return;
+			}
+
+			// process for global variable
 			if (node->lhs->kind == ND_GLOBAL_LVAR){
 				printf("	mov DWORD PTR ");
 				for (int i = 0; i < node->lhs->name_len; i++) printf("%c", node->lhs->glv_name[i]);
@@ -296,7 +307,7 @@ void gen(Node *node){
 				return;
 			}
 
-			// process for local variable
+			// process for local variable (type is int)
 			printf("	pop rax\n");
 			printf("	mov [rax], rdi\n");
 			printf("	push rdi\n");

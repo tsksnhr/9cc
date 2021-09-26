@@ -31,7 +31,6 @@ bool consume(char *op){
 			&& token->kind != TK_ELSE
 			&& token->kind != TK_WHILE
 			&& token->kind != TK_FOR
-			&& token->kind != TK_TYPE
 			&& token->kind != TK_SIZEOF)
 		|| token->len != strlen(op)
 		|| memcmp(token->str, op, token->len)){
@@ -39,6 +38,19 @@ bool consume(char *op){
 	}
 	token = token->next;
 	return true;
+}
+
+// if Token is typename, this returns token and increments Token-position
+// if not, this returns NULL
+Token *consume_typename(){
+	Token *tok;
+
+	if (token->kind != TK_INT && token->kind != TK_CHAR){
+		return NULL;
+	}
+	tok = token;
+	token = token->next;
+	return tok;	
 }
 
 // if Token is identifier, this returns token and increments Token-position
@@ -76,7 +88,6 @@ int expect_number(){
 	return val;
 }
 
-
 // check character whether it's element of token or not
 bool is_token_element(char c){
 	bool is_token_elem;
@@ -111,6 +122,7 @@ Lvar *find_local_Lvar(Token *tok){
 	return NULL;
 }
 
+// search global variables
 Lvar *find_global_Lvar(Token *tok){
 	for (Lvar *lv = globals; lv; lv = lv->next){
 		if (lv->len == tok->len && !memcmp(lv->name, tok->str, lv->len)){
@@ -158,13 +170,18 @@ Token *tokenize(char *p){
 			continue;
 		}
 		if (strncmp(p, "int", 3) == 0 && !is_token_element(p[3])){
-			cur = new_token(TK_TYPE, cur, p, 3);
+			cur = new_token(TK_INT, cur, p, 3);
 			p += 3;
 			continue;
 		}
 		if (strncmp(p, "sizeof", 6) == 0 && !is_token_element(p[6])){
 			cur = new_token(TK_SIZEOF, cur, p, 6);
 			p += 6;
+			continue;
+		}
+		if (strncmp(p, "char", 4) == 0 && !is_token_element(p[4])){
+			cur = new_token(TK_CHAR, cur, p, 4);
+			p += 4;
 			continue;
 		}
 		if (*p >= 'a' && *p <= 'z'){
@@ -228,7 +245,7 @@ Node *new_node_num(int val){
 }
 
 // set varable type
-Type *define_variable_type(){
+Type *define_variable_type(Token *typename){
 	Type *type = calloc(1, sizeof(Type));
 	Type *base = type;
 
@@ -239,7 +256,15 @@ Type *define_variable_type(){
 		type->pointer_to = next;
 		type = type->pointer_to;
 	}
-	type->type_id = INT;
+	if (typename->kind == TK_INT){
+		type->type_id = INT;
+	}
+	else if (typename->kind == TK_CHAR){
+		type->type_id = CHAR;
+	}
+	else{
+		error_at(typename->str, "invalid typename.\n");
+	}
 
 	return base;
 }
@@ -261,12 +286,12 @@ Node *program(){
 	int code_row = 0;
 	while (!at_eof()){
 		while (true){
-			// chech type declare
-			if (!consume("int")){
-				error_at(token->str, "No type declaration.\n");
+			// get ident type
+			Token *typename = consume_typename();
+			if (typename == NULL){
+				error_at(token->str, "Typename is required.\n");
 			}
-			// get ident-name and -type
-			Type *type = define_variable_type();
+			Type *type = define_variable_type(typename);
 			Token *ident = consume_ident();
 
 			if (consume("(")){
@@ -573,8 +598,11 @@ Node *primary(){
 	}
 
 	// declaration of variable
-	if (consume("int")){
-		Type *var_type = define_variable_type();
+//	if (consume("int")){
+	Token *typename = consume_typename();
+	// if "int" or "char" is used
+	if (typename != NULL){
+		Type *var_type = define_variable_type(typename);
 		Token *ident = consume_ident();
 
 		if (consume("[")){

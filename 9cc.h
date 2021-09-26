@@ -18,7 +18,8 @@ typedef enum {
 	TK_ELSE,	// else
 	TK_WHILE,	// while
 	TK_FOR,		// for
-	TK_TYPE,	// variable's type
+	TK_INT,		// int
+	TK_CHAR,	// char
 	TK_SIZEOF,	// sizeof operator
 } TokenKind;
 
@@ -45,7 +46,6 @@ typedef enum {
 	ND_FUNC_DECLARE,	// function declearation
 	ND_ADDRESS,		// for pointer "&"
 	ND_DEREF,		// for pointet "*"
-	ND_INT,			// variable type of int
 	ND_GLOBAL_LVAR,			// global variable
 	ND_GLOBAL_LVAR_DECL,	// global variable declaring
 } NodeKind;
@@ -65,12 +65,13 @@ struct Token {
 typedef struct Type Type;
 struct Type {
 	enum {
+		CHAR,
 		INT,
 		POINTER,
 		ARRAY,
 	} type_id;
-	Type *pointer_to;
-	size_t array_size;
+	Type *pointer_to;		// used if type_id == POINTER
+	size_t array_size;		// used if type_id == ARRAY
 };
 
 typedef struct Node Node;

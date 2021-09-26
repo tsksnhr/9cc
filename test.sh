@@ -98,4 +98,7 @@ assert 4 "int var[10]; int main(){ for (int i = 0; i < 10; i = i + 1) *(var + i)
 assert 0 "int var[10]; int main(){ for (int i = 0; i < 10; i = i + 1) *(var + i) = i; return *var;}"
 assert 2 "int *var; int main(){ int a = 1; var = &a; *var = 2; return *var;}"
 
+assert 1 "int main(){ char a; a = 1; return a;}"
+assert 10 "int main(){ char a[10]; for (int i = 0; i < 10; i = i + 1){ a[i] = i;} return a[3] + a[7];}"
+
 echo OK
