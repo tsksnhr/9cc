@@ -152,6 +152,8 @@ void epilogue();
 void pointer_calc_arraignment(Node *node);
 void change_array_to_pointer(Node *node);
 void gen_global_alloc(Node *node);
+void gen_global_as_rval(Node *node);
+void gen_global_address(Node *node);
 
 // define variable type
 Type *define_variable_type();

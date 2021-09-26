@@ -23,9 +23,6 @@ int main(int argc, char **argv){
 
 	for (int i = 0; code[i]; i++){
 		gen(code[i]);
-
-		// pop last value of each foluma
-//		printf("	pop rax\n");
 	}
 
 	return 0;

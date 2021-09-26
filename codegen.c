@@ -42,17 +42,19 @@ void gen_lval(Node *node){
 // get value from already declared global variable
 void gen_global_as_rval(Node *node){
 
-	// copy head addres of array
+	// return pointer that have head addres of array
 	if (node->type->type_id == ARRAY){
+		// copy head address of array to rax 
 		printf("	lea rax, ");
 		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);	// variable name
 		printf("[rip+8]\n");
 
+		// copy head address of array to pointer
 		printf("	mov ");
 		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);	// variable name
 		printf("[rip], rax\n");
 
-		// get value from global variable
+		// copy head address of array to rax
 		printf("	mov rax, QWORD PTR ");
 		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
 		printf("[rip]\n");
@@ -60,15 +62,27 @@ void gen_global_as_rval(Node *node){
 
 		return;
 	}
+	// return global pointer
+	else if (node->type->type_id == POINTER){
+		// copy address of global pointer 
+		printf("	lea rax, ");
+		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);	// variable name
+		printf("[rip]\n");
+		printf("	push rax\n");
 
-	// get value from global variable
-	printf("	mov eax, DWORD PTR ");
-	for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
-	printf("[rip]\n");
+		return;
+	}
+	// return global variable's right-value
+	else{
+		printf("	mov eax, DWORD PTR ");
+		for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
+		printf("[rip]\n");
 
-	printf("	push rax\n");
+		printf("	push rax\n");
 
-	return;
+		return;
+	}
+
 }
 
 // get global variable's address and push it to stack
@@ -88,12 +102,8 @@ void gen(Node *node){
 	switch (node->kind){
 		case ND_BLOCK:
 			while (node->blk_stmt[stmt_num] != NULL){
-//				if (stmt_num != 0){
-//					printf("	pop rax\n");
-//				}
 				gen(node->blk_stmt[stmt_num++]);
 				printf("	pop rax\n");
-//				stmt_num++;
 			}
 			return;
 

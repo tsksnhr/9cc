@@ -95,5 +95,7 @@ assert 5 "int var[10]; int main(){ var[2] = 5; return 5;}"
 assert 9 "int var[10]; int main(){ var[1] = 2; var[3] = 7; return var[1] + var[3];}"
 assert 4 "int var[10]; int main(){ for (int i = 0; i < 10; i = i + 1) *(var + i) = i; return var[1] + var[3];}"
 assert 4 "int var[10]; int main(){ for (int i = 0; i < 10; i = i + 1) *(var + i) = i; return *(var + 1) + *(var + 3);}"
+assert 0 "int var[10]; int main(){ for (int i = 0; i < 10; i = i + 1) *(var + i) = i; return *var;}"
+assert 2 "int *var; int main(){ int a = 1; var = &a; *var = 2; return *var;}"
 
 echo OK
