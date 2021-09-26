@@ -14,10 +14,7 @@ void gen_global_alloc(Node *node){
 		}
 		else if (node->type->type_id == POINTER){
 			printf(",	%d,	%d\n", 8, 8);
-		}/*
-		else if (node->type->type_id == INT){
-			printf(",	%d,	%d\n", node->head, node->head);
-		}*/
+		}
 		else if (node->type->type_id == CHAR){
 			printf(",	%d,	%d\n", 1, 1);
 		}
