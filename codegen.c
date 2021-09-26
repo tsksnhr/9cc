@@ -40,15 +40,32 @@ void gen_lval(Node *node){
 }
 
 // get value from already declared global variable
-void gen_gl_lval(Node *node){
+void gen_global_as_rval(Node *node){
 
 	printf("	mov eax, DWORD PTR ");
 	for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
-	printf("[rip]\n");
+	if (node->type->type_id == ARRAY){
+		printf("[rip+%d]\n", node->type->array_size);
+	}
+	else{
+		printf("[rip]\n");
+	}
 	printf("	push rax\n");
 
 	return;
 }
+
+// get global variable's address and push it to stack
+void gen_global_address(Node *node){
+
+	printf("	lea rax, ");
+	for (int i = 0; i < node->name_len; i++) printf("%c", node->glv_name[i]);
+	printf("[rip]\n", node->type->array_size);
+	printf("	push rax\n");
+
+	return;
+}
+
 
 void gen(Node *node){
 	int stmt_num = 0;
@@ -150,7 +167,7 @@ void gen(Node *node){
 			return;
 
 		case ND_GLOBAL_LVAR:
-			gen_gl_lval(node);
+			gen_global_as_rval(node);
 			return;
 
 		case ND_GLOBAL_LVAR_DECL:
@@ -247,11 +264,9 @@ void gen(Node *node){
 				printf("	mov DWORD PTR ");
 				for (int i = 0; i < node->lhs->name_len; i++) printf("%c", node->lhs->glv_name[i]);
 				printf("[rip], edi\n");
-
-				printf("	mov eax, DWORD PTR ");
-				for (int i = 0; i < node->lhs->name_len; i++) printf("%c", node->lhs->glv_name[i]);
-				printf("[rip]\n");
-				printf("	push rax\n");
+			
+				// get global variable'd value and push it to stack
+				gen_global_as_rval(node->lhs);
 				return;
 			}
 
@@ -262,7 +277,16 @@ void gen(Node *node){
 			return;
 
 		case ND_ADDRESS:
-			gen_lval(node->lhs);	// get variable's offset from rbp, and pushed
+			if (node->lhs->kind == ND_LOCAL_LVAR){
+				gen_lval(node->lhs);	// get variable's offset from rbp, and pushed
+			}
+			else if (node->lhs->kind == ND_GLOBAL_LVAR){
+				gen_global_address(node->lhs);
+			}
+			else{
+				fprintf(stderr, "It's invalid.\n");
+				exit(1);
+			}
 			return;
 
 		case ND_DEREF:

@@ -90,5 +90,7 @@ assert 7 "int main(){ int a[10]; for (int i = 0; i < 10; i = i + 1){ a[i] = i;} 
 assert 1 "int var; int main(){ var = 1; return var;}"
 assert 2 "int gv; int main(){ gv = 1; return gv + 1;}"
 assert 3 "int a; int b; int main(){ a = 1;  b = 2; return a + b;}"
+assert 1 "int a; int main(){ int *p; p = &a; *p = 1; return *p;}"
+#assert 5 "int var[10]; int main(){ var[2] = 5; return var[5];}"
 
 echo OK

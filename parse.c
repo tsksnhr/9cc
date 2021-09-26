@@ -274,6 +274,11 @@ Node *program(){
 				break;
 			}
 			else{
+				if (consume("[")){
+					type = define_array(type);
+					type->array_size = (size_t)(expect_number());
+					expect("]");
+				}
 				code[code_row++] = decllvar(ident, type, ND_GLOBAL_LVAR_DECL);
 				expect(";");
 			}
